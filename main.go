@@ -7,8 +7,10 @@ import (
 
 	_ "github.com/Anabol1ks/pers-fin-m/docs"
 	"github.com/Anabol1ks/pers-fin-m/internal/auth"
+	сategory "github.com/Anabol1ks/pers-fin-m/internal/category"
 	"github.com/Anabol1ks/pers-fin-m/internal/storage"
-	"github.com/Anabol1ks/pers-fin-m/users"
+	"github.com/Anabol1ks/pers-fin-m/internal/transactions"
+	"github.com/Anabol1ks/pers-fin-m/internal/users"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -31,7 +33,7 @@ func main() {
 	}
 	storage.ConnectDatabase()
 
-	storage.DB.AutoMigrate(&users.User{})
+	storage.DB.AutoMigrate(&users.User{}, &transactions.Transaction{}, &сategory.Category{})
 
 	r := gin.Default()
 
@@ -46,6 +48,12 @@ func main() {
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	r.POST("/auth/register", auth.RegisterHandler)
 	r.POST("/auth/login", auth.LoginHandler)
+
+	authorized := r.Group("/")
+	{
+		authorized.Use(auth.AuthMiddleware())
+		authorized.POST("/transactions", transactions.CreateTransaction)
+	}
 
 	if err := r.Run(":8080"); err != nil {
 		log.Fatal("Ошибка запуска сервера: ", err)

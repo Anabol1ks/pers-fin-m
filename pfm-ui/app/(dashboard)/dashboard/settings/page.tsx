@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useTheme } from "next-themes";
+import NotLoginModal from '@/components/ui/NotLoginModal'
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
@@ -31,6 +32,8 @@ export default function SettingsPage() {
   });
 
   return (
+    <>
+    <NotLoginModal />
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Settings</h1>
 
@@ -182,5 +185,6 @@ export default function SettingsPage() {
         </Card>
       </div>
     </div>
+    </>
   );
 }

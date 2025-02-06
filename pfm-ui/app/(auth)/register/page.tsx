@@ -12,7 +12,7 @@ import Cookies from 'js-cookie'
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
-    name: "",
+    username: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -74,11 +74,11 @@ export default function RegisterPage() {
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="username">Full Name</Label>
               <Input
-                id="name"
+                id="username"
                 placeholder="John Doe"
-                value={formData.name}
+                value={formData.username}
                 onChange={handleChange}
                 required
               />
@@ -88,7 +88,7 @@ export default function RegisterPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="name@example.com"
+                placeholder="username@example.com"
                 value={formData.email}
                 onChange={handleChange}
                 required

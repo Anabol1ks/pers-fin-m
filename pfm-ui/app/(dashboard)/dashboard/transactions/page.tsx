@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Search, Filter } from "lucide-react";
+import NotLoginModal from '@/components/ui/NotLoginModal'
 
 const transactions = [
   {
@@ -53,6 +54,8 @@ export default function TransactionsPage() {
   const [categoryFilter, setCategoryFilter] = useState("all");
 
   return (
+    <>
+    <NotLoginModal  />
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Transactions</h1>
@@ -124,5 +127,6 @@ export default function TransactionsPage() {
         </CardContent>
       </Card>
     </div>
+    </>
   );
 }

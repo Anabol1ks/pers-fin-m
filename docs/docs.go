@@ -118,6 +118,57 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/transactions": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Создает новую транзакцию для пользователя",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Создать транзакцию",
+                "parameters": [
+                    {
+                        "description": "Транзакция для создания",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/transactions.TransactionInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/transactions.TransactionInput"
+                        }
+                    },
+                    "400": {
+                        "description": "Ошибка валидации",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка создания транзакции",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -179,6 +230,36 @@ const docTemplate = `{
                 "token": {
                     "type": "string",
                     "example": "Ваш токен"
+                }
+            }
+        },
+        "transactions.TransactionInput": {
+            "type": "object",
+            "required": [
+                "amount",
+                "title"
+            ],
+            "properties": {
+                "amount": {
+                    "type": "integer"
+                },
+                "bonusChange": {
+                    "type": "number"
+                },
+                "category": {
+                    "type": "integer"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
                 }
             }
         }

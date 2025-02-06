@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/Anabol1ks/pers-fin-m/internal/storage"
-	"github.com/Anabol1ks/pers-fin-m/users"
+	"github.com/Anabol1ks/pers-fin-m/internal/users"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 	"golang.org/x/crypto/bcrypt"

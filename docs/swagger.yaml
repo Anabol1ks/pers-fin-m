@@ -40,6 +40,26 @@ definitions:
         example: Ваш токен
         type: string
     type: object
+  transactions.TransactionInput:
+    properties:
+      amount:
+        type: integer
+      bonusChange:
+        type: number
+      category:
+        type: integer
+      currency:
+        type: string
+      date:
+        type: string
+      description:
+        type: string
+      title:
+        type: string
+    required:
+    - amount
+    - title
+    type: object
 info:
   contact: {}
   title: Персональный финансовый менеджер
@@ -112,6 +132,38 @@ paths:
       summary: Регистрация пользователя
       tags:
       - auth
+  /transactions:
+    post:
+      consumes:
+      - application/json
+      description: Создает новую транзакцию для пользователя
+      parameters:
+      - description: Транзакция для создания
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/transactions.TransactionInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/transactions.TransactionInput'
+        "400":
+          description: Ошибка валидации
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Ошибка создания транзакции
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Создать транзакцию
+      tags:
+      - Transactions
 securityDefinitions:
   BearerAuth:
     in: header
