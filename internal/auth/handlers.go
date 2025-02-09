@@ -1,8 +1,11 @@
 package auth
 
 import (
+	"errors"
 	"net/http"
 	"os"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/Anabol1ks/pers-fin-m/internal/storage"
@@ -37,6 +40,13 @@ func RegisterHandler(c *gin.Context) {
 		return
 	}
 
+	if err := ValidatePassword(input.Password); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	input.Email = strings.ToLower(input.Email)
+
 	var existingUser users.User
 	if err := storage.DB.Where("email = ?", input.Email).First(&existingUser).Error; err == nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "Почта уже зарегистрированны"})
@@ -61,6 +71,28 @@ func RegisterHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"message": "Регистрация успешна"})
+}
+
+func ValidatePassword(password string) error {
+	if len(password) < 8 {
+		return errors.New("пароль должен содержать минимум 8 символов")
+	}
+
+	lowercaseRegex := regexp.MustCompile(`[a-z]`)
+	uppercaseRegex := regexp.MustCompile(`[A-Z]`)
+	digitRegex := regexp.MustCompile(`\d`)
+
+	if !lowercaseRegex.MatchString(password) {
+		return errors.New("пароль должен содержать хотя бы одну строчную букву")
+	}
+	if !uppercaseRegex.MatchString(password) {
+		return errors.New("пароль должен содержать хотя бы одну заглавную букву")
+	}
+	if !digitRegex.MatchString(password) {
+		return errors.New("пароль должен содержать хотя бы одну цифру")
+	}
+
+	return nil
 }
 
 var jwtSecret = []byte(os.Getenv("JWT_KEY"))
@@ -88,6 +120,8 @@ func LoginHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	input.Email = strings.ToLower(input.Email)
 
 	var user users.User
 	if err := storage.DB.Where("email = ?", input.Email).First(&user).Error; err != nil {

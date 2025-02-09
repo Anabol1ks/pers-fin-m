@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import { set } from 'date-fns'
+import { set } from 'data-fns'
 import Cookies from 'js-cookie'
 
 export default function LoginPage() {
@@ -20,34 +20,47 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
     // Add authentication logic here
+    const normalizedEmail = email.toLowerCase()
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
+      const response = await fetch(
+				`${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
 				{
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
 					},
 					body: JSON.stringify({
-						email: email,
+						email: normalizedEmail,
 						password: password,
 					}),
 				}
 			)
 
-    const date = await response.json();
-    console.log(date);
+    const data = await response.json();
+    console.log(data);
     if (response.ok) {
       // Login successful, redirect to dashboard or home page
-      Cookies.set('token', date.token);
+      Cookies.set('token', data.token);
       window.location.href = '/dashboard';
     } else {
       // Login failed, show error message
-      setError(date.error || 'Ошибка авторизации')
+      setError(data.error || 'Ошибка авторизации')
+      toast({
+				title: 'Ошибка регистрации',
+				description: data.error || 'Ошибка авторизации',
+				variant: 'destructive',
+			})
+			return
     }
   } catch (error) {
     console.error(error);
     setError('Произошла ошибка при выполнении запроса');
+    toast({
+			title: 'Ошибка',
+			description: 'Произошла ошибка при выполнении запроса',
+			variant: 'destructive',
+		})
   }
 }
 

@@ -12,20 +12,16 @@ export const metadata: Metadata = {
   description: 'Comprehensive financial tracking and analysis platform',
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-          <Toaster />
-          {children}
-        </ThemeProvider>
-      </body>
-    </html>
-  );
-}
 
+export default function RootLayout({ children }) {
+	return (
+		<html lang='en'>
+			<body>
+				<ThemeProvider attribute='class' defaultTheme='dark' enableSystem>
+					<Toaster />
+					{children}
+				</ThemeProvider>
+			</body>
+		</html>
+	)
+}
