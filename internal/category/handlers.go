@@ -30,7 +30,8 @@ func GetAllCategories(c *gin.Context) {
 }
 
 type CreateCategoryInput struct {
-	Name string `json:"name" binding:"required"`
+	Name  string `json:"name" binding:"required"`
+	Color string `json:"color"`
 }
 
 // @Security BearerAuth
@@ -63,6 +64,7 @@ func CreateCategory(c *gin.Context) {
 	category := Category{
 		Name:   input.Name,
 		UserID: &userID,
+		Color:  input.Color,
 	}
 
 	if err := storage.DB.Create(&category).Error; err != nil {

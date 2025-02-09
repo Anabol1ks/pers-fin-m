@@ -33,7 +33,9 @@ func main() {
 	}
 	storage.ConnectDatabase()
 
-	storage.DB.AutoMigrate(&users.User{}, &transactions.Transaction{}, &сategory.Category{})
+	if err := storage.DB.AutoMigrate(&users.User{}, &transactions.Transaction{}, &сategory.Category{}); err != nil {
+		log.Fatal(err)
+	}
 
 	r := gin.Default()
 

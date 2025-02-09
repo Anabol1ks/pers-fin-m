@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import axios from 'axios'
 import {
   Card,
   CardContent,
@@ -22,6 +23,9 @@ import {
 import { Label } from "@/components/ui/label";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import NotLoginModal from '@/components/ui/NotLoginModal'
+import Cookies from 'js-cookie'
+import { useToast } from '@/hooks/use-toast'
+import { ToastAction } from "@/components/ui/toast"
 
 const defaultCategories = [
   { id: 1, name: "Housing", color: "#FF6B6B", type: "expense" },
@@ -34,23 +38,84 @@ const defaultCategories = [
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState(defaultCategories);
-  const [newCategory, setNewCategory] = useState({ name: "", color: "#000000", type: "expense" });
+  const [newCategory, setNewCategory] = useState({ Name: "", Color: "#000000" });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+	const [isLoading, setIsLoading] = useState(false)
+	const { toast } = useToast()
 
-  const handleAddCategory = () => {
-    if (newCategory.name) {
-      setCategories([
-        ...categories,
-        { id: categories.length + 1, ...newCategory },
-      ]);
-      setNewCategory({ name: "", color: "#000000", type: "expense" });
-      setIsDialogOpen(false);
-    }
-  };
+  const handleAddCategory = async () => {
+		if (newCategory.Name) {
+			try {
+				// Отправка новой категории на сервер
+				const response = await axios.post(
+					`${process.env.NEXT_PUBLIC_API_URL}/categories`,
+					newCategory,
+					{
+						headers: {
+							Authorization: `Bearer ${Cookies.get('token')}`,
+						},
+					}
+				)
+
+				// 
+				if (response.data){
+					console.log(response.data)
+					toast({
+						title: 'Успешно',
+						description: 'Категория успешно создана',
+						variant: 'default'
+					})
+					setNewCategory({ Name: '', Color: '#000000'	 })
+					setIsDialogOpen(false)
+					setIsLoading(true)
+				}
+			} catch (error) {
+				console.error('Ошибка создания категории:', error)
+				toast({
+					title: 'Ошибка',
+					description: 'Ошибка при создании категории',
+					variant: 'destructive',
+				})
+			}
+		}
+	}
+	
+
+	useEffect(()=>{
+		const loadCategories = async () => {
+			const token = Cookies.get('token')
+			try{
+				const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/categories`, {
+					headers: {
+						Authorization: `Bearer ${token}`,
+					}
+				});
+				if (response.data){
+					console.log(response.data)
+					setCategories(response.data)
+				}else {
+					toast({
+						title: 'Ошибка',
+						description: 'Ошибка при загрузке категорий, отображены демонстрационные категории',
+						variant: 'destructive',
+					})
+					return
+				}
+			} catch (error) {
+				console.error(error)
+				toast({
+					title: 'Ошибка',
+					description: 'Ошибка при загрузке категорий, отображены демонстрационные категории',
+					variant: 'destructive',
+				})
+			}
+		};
+		loadCategories();
+	}, [isLoading]);
 
   return (
 		<>
-    <NotLoginModal />
+			<NotLoginModal />
 			<div className='space-y-6'>
 				<div className='flex justify-between items-center'>
 					<h1 className='text-3xl font-bold'>Categories</h1>
@@ -72,9 +137,9 @@ export default function CategoriesPage() {
 									<Label htmlFor='name'>Name</Label>
 									<Input
 										id='name'
-										value={newCategory.name}
+										value={newCategory.Name}
 										onChange={e =>
-											setNewCategory({ ...newCategory, name: e.target.value })
+											setNewCategory({ ...newCategory, Name: e.target.value })
 										}
 										placeholder='Category name'
 									/>
@@ -85,41 +150,27 @@ export default function CategoriesPage() {
 										<Input
 											id='color'
 											type='color'
-											value={newCategory.color}
+											value={newCategory.Color}
 											onChange={e =>
 												setNewCategory({
 													...newCategory,
-													color: e.target.value,
+													Color: e.target.value,
 												})
 											}
 											className='w-24 h-10 p-1'
 										/>
 										<Input
-											value={newCategory.color}
+											value={newCategory.Color}
 											onChange={e =>
 												setNewCategory({
 													...newCategory,
-													color: e.target.value,
+													Color: e.target.value,
 												})
 											}
 											placeholder='#000000'
 											className='flex-1'
 										/>
 									</div>
-								</div>
-								<div className='grid gap-2'>
-									<Label htmlFor='type'>Type</Label>
-									<select
-										id='type'
-										value={newCategory.type}
-										onChange={e =>
-											setNewCategory({ ...newCategory, type: e.target.value })
-										}
-										className='flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background'
-									>
-										<option value='expense'>Expense</option>
-										<option value='income'>Income</option>
-									</select>
 								</div>
 							</div>
 							<DialogFooter>
@@ -137,33 +188,28 @@ export default function CategoriesPage() {
 
 				<div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
 					{categories.map(category => (
-						<Card key={category.id}>
+						<Card key={category.ID}>
 							<CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-								<div className='flex items-center space-x-2'>
+								<div className='flex items-center space-x-2 flex-1'>
 									<div
-										className='w-4 h-4 rounded-full'
-										style={{ backgroundColor: category.color }}
+										className={`w-4 h-4 rounded-full`}
+										style={{ backgroundColor: category.Color }}
 									/>
 									<CardTitle className='text-sm font-medium'>
-										{category.name}
+										{category.Name}
 									</CardTitle>
 								</div>
-								<div className='flex space-x-2'>
-									<Button variant='ghost' size='icon'>
-										<Pencil className='h-4 w-4' />
-									</Button>
-									<Button variant='ghost' size='icon'>
-										<Trash2 className='h-4 w-4' />
-									</Button>
-								</div>
+								{!category.IsDefault && (
+									<div className='flex space-x-2'>
+										<Button variant='ghost' size='icon'>
+											<Pencil className='h-4 w-4' />
+										</Button>
+										<Button variant='ghost' size='icon'>
+											<Trash2 className='h-4 w-4' />
+										</Button>
+									</div>
+								)}
 							</CardHeader>
-							<CardContent>
-								<CardDescription>
-									Type:{' '}
-									{category.type.charAt(0).toUpperCase() +
-										category.type.slice(1)}
-								</CardDescription>
-							</CardContent>
 						</Card>
 					))}
 				</div>
