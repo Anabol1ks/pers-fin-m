@@ -60,6 +60,27 @@ definitions:
     - amount
     - title
     type: object
+  сategory.Category:
+    properties:
+      createdAt:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      updatedAt:
+        type: string
+      userID:
+        description: nil для дефолтных категорий
+        type: integer
+    type: object
+  сategory.CreateCategoryInput:
+    properties:
+      name:
+        type: string
+    required:
+    - name
+    type: object
 info:
   contact: {}
   title: Персональный финансовый менеджер
@@ -132,6 +153,58 @@ paths:
       summary: Регистрация пользователя
       tags:
       - auth
+  /categories:
+    get:
+      description: Получить все категории пользователя или категории по умолчанию
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/%D1%81ategory.Category'
+            type: array
+        "500":
+          description: Ошибка при получении категорий
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Получить категории
+      tags:
+      - Categories
+    post:
+      consumes:
+      - application/json
+      description: Создать новую категорию для пользователя
+      parameters:
+      - description: Категория для создания
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/%D1%81ategory.CreateCategoryInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/%D1%81ategory.Category'
+        "400":
+          description: Ошибка валидации
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Ошибка создания категории
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Создать категорию
+      tags:
+      - Categories
   /transactions:
     post:
       consumes:
