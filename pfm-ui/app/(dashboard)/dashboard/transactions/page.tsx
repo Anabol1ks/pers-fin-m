@@ -23,6 +23,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Plus, Search, Filter } from 'lucide-react'
 import NotLoginModal from '@/components/ui/NotLoginModal'
 import { LoadCategories } from '@/api/LoadCategories'
+import { ru } from 'date-fns/locale'
 import { useToast } from '@/hooks/use-toast'
 import {
 	Dialog,
@@ -37,30 +38,26 @@ import { Label } from '@/components/ui/label'
 import { DatePicker } from '@/components/ui/DatePick'
 import axios from 'axios'
 import Cookies from 'js-cookie'
-import { ca } from 'date-fns/locale'
 
-const transactions = [
+const transactionsData = [
 	{
 		id: 1,
-		date: '2024-03-20',
-		type: 'expense',
-		category: 'Housing',
+		Date: '2024-03-20',
+		Category: 1, // id категории
 		amount: -45000,
 		description: 'Monthly Rent',
 	},
 	{
 		id: 2,
-		date: '2024-03-19',
-		type: 'income',
-		category: 'Salary',
+		Date: '2024-03-19',
+		Category: 5, // id категории
 		amount: 150000,
 		description: 'Monthly Salary',
 	},
 	{
 		id: 3,
-		date: '2024-03-18',
-		type: 'expense',
-		category: 'Food',
+		Date: '2024-03-18',
+		Category: 2, // id категории
 		amount: -2500,
 		description: 'Grocery Shopping',
 	},
@@ -72,9 +69,10 @@ export default function TransactionsPage() {
 	const [categories, setCategories] = useState([])
 	const [isDialogOpen, setIsDialogOpen] = useState(false)
 	const { toast } = useToast()
+	const [isLoading, setIsLoading] = useState(true)
+	const [transactions, setTransactions] = useState([])
 
-	// Объект транзакции, где поля BonusChange и BonusType могут быть null,
-	// если бонусов нет
+	// Состояние для новой транзакции
 	const [newTransaction, setNewTransaction] = useState({
 		Amount: null as number | null,
 		BonusChange: null as number | null,
@@ -91,6 +89,7 @@ export default function TransactionsPage() {
 	const [date, setDate] = useState<Date>(new Date())
 
 	const handleAddTransactions = async () => {
+		// Простая валидация
 		if (!newTransaction.Amount) {
 			toast({
 				title: 'Ошибка',
@@ -142,6 +141,7 @@ export default function TransactionsPage() {
 				}
 			)
 			if (response.status === 201) {
+				setIsLoading(true)
 				toast({
 					title: 'Успех',
 					description: 'Транзакция успешно добавлена',
@@ -166,8 +166,44 @@ export default function TransactionsPage() {
 	}
 
 	useEffect(() => {
+		const loadTransactions = async () => {
+			try {
+				const response = await axios.get(
+					`${process.env.NEXT_PUBLIC_API_URL}/transactions`,
+					{
+						headers: {
+							Authorization: `Bearer ${Cookies.get('token')}`,
+						},
+					}
+				)
+				if (response.status === 200) {
+					setTransactions(response.data)
+					console.log(response.data)
+					return response.data
+				} else {
+					toast({
+						title: 'Ошибка',
+						description: 'Не удалось загрузить транзакции',
+						variant: 'destructive',
+					})
+					return []
+				}
+			} catch (error) {
+				console.error('Ошибка при загрузке транзакций:', error)
+				toast({
+					title: 'Ошибка',
+					description: 'Не удалось загрузить транзакции',
+					variant: 'destructive',
+				})
+				return []
+			}
+		}
+		loadTransactions()
+	}, [isLoading])
+
+	useEffect(() => {
+		// При открытии диалога устанавливаем текущую дату
 		if (isDialogOpen) {
-			// При открытии диалога обновляем дату
 			setDate(new Date())
 		}
 	}, [isDialogOpen])
@@ -238,11 +274,9 @@ export default function TransactionsPage() {
 											}
 											onChange={e => {
 												const valueStr = e.target.value.trim()
-												// Проверяем, что введено только число
 												if (!/^-?\d*\.?\d*$/.test(valueStr)) return
 												const value =
 													valueStr === '' ? null : parseFloat(valueStr)
-												// Если значение 0, сохраняем как null
 												setNewTransaction({
 													...newTransaction,
 													Amount: value === 0 ? null : value,
@@ -250,10 +284,6 @@ export default function TransactionsPage() {
 											}}
 											placeholder='1000'
 											className='flex-1'
-											style={{
-												MozAppearance: 'textfield',
-												WebkitAppearance: 'none',
-											}}
 										/>
 										<Select
 											onValueChange={value =>
@@ -326,7 +356,6 @@ export default function TransactionsPage() {
 								{/* Блок с датой и бонусами */}
 								<div className='grid gap-2'>
 									<div className='flex gap-2'>
-										{/* Колонка для даты */}
 										<div>
 											<Label htmlFor='date'>Дата</Label>
 											<DatePicker
@@ -340,7 +369,6 @@ export default function TransactionsPage() {
 												}}
 											/>
 										</div>
-										{/* Колонка для бонусов */}
 										<div>
 											<Label htmlFor='bonus'>Бонусы</Label>
 											<div className='flex items-center gap-2'>
@@ -368,7 +396,6 @@ export default function TransactionsPage() {
 													className='flex-1'
 												/>
 												<Select
-													// Если бонусов нет, не выбираем тип
 													onValueChange={value =>
 														setNewTransaction({
 															...newTransaction,
@@ -453,26 +480,65 @@ export default function TransactionsPage() {
 										<TableHead>Date</TableHead>
 										<TableHead>Category</TableHead>
 										<TableHead>Description</TableHead>
+										<TableHead>Bonus</TableHead>
 										<TableHead className='text-right'>Amount</TableHead>
 									</TableRow>
 								</TableHeader>
 								<TableBody>
-									{transactions.map(transaction => (
-										<TableRow key={transaction.id}>
-											<TableCell>{transaction.date}</TableCell>
-											<TableCell>{transaction.category}</TableCell>
-											<TableCell>{transaction.description}</TableCell>
-											<TableCell
-												className={`text-right ${
-													transaction.amount > 0
-														? 'text-emerald-500'
-														: 'text-red-500'
-												}`}
-											>
-												₽{Math.abs(transaction.amount).toLocaleString()}
-											</TableCell>
-										</TableRow>
-									))}
+									{transactions.map(transaction => {
+										// Находим объект категории по id, хранящемуся в transaction.Category
+										const categoryObj = categories.find(
+											cat => cat.ID === transaction.Category
+										)
+										return (
+											<TableRow key={transaction.ID}>
+												<TableCell>
+													{format(new Date(transaction.Date), 'd MMMM yyyy', {
+														locale: ru,
+													})}
+												</TableCell>
+
+												<TableCell>
+													{categoryObj
+														? categoryObj.Name
+														: 'Неизвестная категория'}
+												</TableCell>
+												<TableCell>
+													{' '}
+													{transaction.Description &&
+													transaction.Description.length > 15
+														? transaction.Description.slice(0, 15) + '...'
+														: transaction.Description}
+												</TableCell>
+												<TableCell
+													className={`${
+														transaction.BonusChange === 0
+															? ''
+															: transaction.BonusType === 'expense'
+															? 'text-red-500'
+															: transaction.BonusType === 'income'
+															? 'text-emerald-500'
+															: ''
+													}`}
+												>
+													{transaction.BonusChange === 0
+														? '-'
+														: transaction.BonusChange}
+												</TableCell>
+												<TableCell
+													className={`text-right ${
+														transaction.Type === 'expense'
+															? 'text-red-500'
+															: transaction.Type === 'income'
+															? 'text-emerald-500'
+															: ''
+													}`}
+												>
+													₽{Math.abs(transaction.Amount).toLocaleString()}
+												</TableCell>
+											</TableRow>
+										)
+									})}
 								</TableBody>
 							</Table>
 						</div>

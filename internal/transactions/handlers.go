@@ -56,6 +56,12 @@ func CreateTransaction(c *gin.Context) {
 		return
 	}
 
+	if input.BonusChange != 0 && input.BonusType == "" {
+		log.Println("При ненулевом бонусе тип бонуса должен быть указан")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "При ненулевом бонусе тип бонуса должен быть указан"})
+		return
+	}
+
 	var category models.Category
 	if err := storage.DB.
 		Where("id = ? AND (user_id IS NULL OR user_id = ?)", input.Category, userID).
@@ -93,4 +99,25 @@ func CreateTransaction(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, transaction)
+}
+
+// @Security BearerAuth
+// GetAllTransactions godoc
+// @Summary Получить все транзакции пользователя
+// @Description Получить все транзакции пользователя
+// @Tags Transactions
+// @Produce json
+// @Success 200 {array} models.Transaction "Список транзакций"
+// @Failure 500 {object} response.ErrorResponse "Ошибка при получении транзакций"
+// @Router /transactions [get]
+func GetAllTransactions(c *gin.Context) {
+	userID := c.GetUint("userID")
+
+	var transactions []models.Transaction
+	if err := storage.DB.Where("user_id = ?", userID).Find(&transactions).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при получении транзакций"})
+		return
+	}
+
+	c.JSON(http.StatusOK, transactions)
 }
