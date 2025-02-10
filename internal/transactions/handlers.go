@@ -1,10 +1,11 @@
 package transactions
 
 import (
+	"log"
 	"net/http"
 	"time"
 
-	сategory "github.com/Anabol1ks/pers-fin-m/internal/category"
+	"github.com/Anabol1ks/pers-fin-m/internal/models"
 	"github.com/Anabol1ks/pers-fin-m/internal/storage"
 	"github.com/gin-gonic/gin"
 )
@@ -17,6 +18,8 @@ type TransactionInput struct {
 	Title       string    `json:"title" binding:"required"`
 	Description string    `json:"description"`
 	Category    uint      `json:"category"`
+	Type        string    `json:"type" binding:"required,oneof=income expense"`
+	BonusType   string    `json:"typeBonus"`
 }
 
 // @Security BearerAuth
@@ -36,14 +39,28 @@ func CreateTransaction(c *gin.Context) {
 
 	var input TransactionInput
 	if err := c.ShouldBindJSON(&input); err != nil {
+		log.Println("Ошибка валидации:", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	var category сategory.Category
+	if input.Amount <= 0 {
+		log.Println("Сумма должна быть больше 0")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Сумма должна быть больше 0"})
+		return
+	}
+
+	if input.BonusChange == 0 && input.BonusType != "" {
+		log.Println("При нулевом бонусе тип бонуса должен быть пустым")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "При нулевом бонусе тип бонуса должен быть пустым"})
+		return
+	}
+
+	var category models.Category
 	if err := storage.DB.
 		Where("id = ? AND (user_id IS NULL OR user_id = ?)", input.Category, userID).
 		First(&category).Error; err != nil {
+		log.Println("Указана неверная категория")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Указана неверная категория"})
 		return
 	}
@@ -57,15 +74,17 @@ func CreateTransaction(c *gin.Context) {
 	}
 
 	// Создание транзакции в базе данных
-	transaction := Transaction{
+	transaction := models.Transaction{
 		UserID:      userID,
 		Amount:      input.Amount,
 		BonusChange: input.BonusChange,
+		BonusType:   models.TransactionType(input.BonusType),
 		Currency:    input.Currency,
 		Date:        input.Date,
 		Title:       input.Title,
 		Description: input.Description,
 		Category:    input.Category,
+		Type:        models.TransactionType(input.Type),
 	}
 
 	if err := storage.DB.Create(&transaction).Error; err != nil {

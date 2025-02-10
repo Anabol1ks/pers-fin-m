@@ -8,6 +8,7 @@ import (
 	_ "github.com/Anabol1ks/pers-fin-m/docs"
 	"github.com/Anabol1ks/pers-fin-m/internal/auth"
 	сategory "github.com/Anabol1ks/pers-fin-m/internal/category"
+	"github.com/Anabol1ks/pers-fin-m/internal/models"
 	"github.com/Anabol1ks/pers-fin-m/internal/storage"
 	"github.com/Anabol1ks/pers-fin-m/internal/transactions"
 	"github.com/Anabol1ks/pers-fin-m/internal/users"
@@ -33,7 +34,7 @@ func main() {
 	}
 	storage.ConnectDatabase()
 
-	if err := storage.DB.AutoMigrate(&users.User{}, &transactions.Transaction{}, &сategory.Category{}); err != nil {
+	if err := storage.DB.AutoMigrate(&users.User{}, &models.Transaction{}, &models.Category{}); err != nil {
 		log.Fatal(err)
 	}
 
@@ -57,6 +58,8 @@ func main() {
 		authorized.POST("/transactions", transactions.CreateTransaction)
 		authorized.GET("/categories", сategory.GetAllCategories)
 		authorized.POST("/categories", сategory.CreateCategory)
+		authorized.DELETE("/categories/:id", сategory.DelCategory)
+		authorized.PUT("/categories/:id", сategory.UpdateCategory)
 	}
 
 	if err := r.Run(":8080"); err != nil {

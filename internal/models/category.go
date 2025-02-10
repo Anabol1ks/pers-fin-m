@@ -1,4 +1,4 @@
-package сategory
+package models
 
 import "time"
 

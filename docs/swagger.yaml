@@ -22,6 +22,24 @@ definitions:
     - password
     - username
     type: object
+  models.Category:
+    properties:
+      color:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: integer
+      isDefault:
+        type: boolean
+      name:
+        type: string
+      updatedAt:
+        type: string
+      userID:
+        description: nil для дефолтных категорий
+        type: integer
+    type: object
   response.ErrorResponse:
     description: Стандартный ответ при ошибке
     properties:
@@ -56,30 +74,33 @@ definitions:
         type: string
       title:
         type: string
+      type:
+        enum:
+        - income
+        - expense
+        type: string
+      typeBonus:
+        type: string
     required:
     - amount
     - title
-    type: object
-  сategory.Category:
-    properties:
-      createdAt:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-      updatedAt:
-        type: string
-      userID:
-        description: nil для дефолтных категорий
-        type: integer
+    - type
     type: object
   сategory.CreateCategoryInput:
     properties:
+      color:
+        type: string
       name:
         type: string
     required:
     - name
+    type: object
+  сategory.UpdateCategoryInput:
+    properties:
+      color:
+        type: string
+      name:
+        type: string
     type: object
 info:
   contact: {}
@@ -163,7 +184,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/%D1%81ategory.Category'
+              $ref: '#/definitions/models.Category'
             type: array
         "500":
           description: Ошибка при получении категорий
@@ -191,7 +212,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/%D1%81ategory.Category'
+            $ref: '#/definitions/models.Category'
         "400":
           description: Ошибка валидации
           schema:
@@ -203,6 +224,71 @@ paths:
       security:
       - BearerAuth: []
       summary: Создать категорию
+      tags:
+      - Categories
+  /categories/{id}:
+    delete:
+      description: Удалить категорию пользователя
+      parameters:
+      - description: ID категории
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Категория успешно удалена
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "500":
+          description: Ошибка удаления категории
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Удалить категорию
+      tags:
+      - Categories
+    put:
+      consumes:
+      - application/json
+      description: Обновить информацию о категории пользователя
+      parameters:
+      - description: ID категории
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Категория для обновления
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/%D1%81ategory.UpdateCategoryInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Категория успешно обновлена
+          schema:
+            $ref: '#/definitions/models.Category'
+        "400":
+          description: Ошибка валидации
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Категория не найдена
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Ошибка обновления категории
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Обновить категорию
       tags:
       - Categories
   /transactions:

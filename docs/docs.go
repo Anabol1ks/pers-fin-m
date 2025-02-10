@@ -140,7 +140,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/%D1%81ategory.Category"
+                                "$ref": "#/definitions/models.Category"
                             }
                         }
                     },
@@ -184,7 +184,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/%D1%81ategory.Category"
+                            "$ref": "#/definitions/models.Category"
                         }
                     },
                     "400": {
@@ -195,6 +195,108 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Ошибка создания категории",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/categories/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Обновить информацию о категории пользователя",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Обновить категорию",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID категории",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Категория для обновления",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/%D1%81ategory.UpdateCategoryInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Категория успешно обновлена",
+                        "schema": {
+                            "$ref": "#/definitions/models.Category"
+                        }
+                    },
+                    "400": {
+                        "description": "Ошибка валидации",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Категория не найдена",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка обновления категории",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Удалить категорию пользователя",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Удалить категорию",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID категории",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Категория успешно удалена",
+                        "schema": {
+                            "$ref": "#/definitions/response.SuccessResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка удаления категории",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -289,6 +391,33 @@ const docTemplate = `{
                 }
             }
         },
+        "models.Category": {
+            "type": "object",
+            "properties": {
+                "color": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isDefault": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "userID": {
+                    "description": "nil для дефолтных категорий",
+                    "type": "integer"
+                }
+            }
+        },
         "response.ErrorResponse": {
             "description": "Стандартный ответ при ошибке",
             "type": "object",
@@ -320,7 +449,8 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "amount",
-                "title"
+                "title",
+                "type"
             ],
             "properties": {
                 "amount": {
@@ -343,27 +473,16 @@ const docTemplate = `{
                 },
                 "title": {
                     "type": "string"
-                }
-            }
-        },
-        "сategory.Category": {
-            "type": "object",
-            "properties": {
-                "createdAt": {
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "income",
+                        "expense"
+                    ]
+                },
+                "typeBonus": {
                     "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "updatedAt": {
-                    "type": "string"
-                },
-                "userID": {
-                    "description": "nil для дефолтных категорий",
-                    "type": "integer"
                 }
             }
         },
@@ -373,6 +492,20 @@ const docTemplate = `{
                 "name"
             ],
             "properties": {
+                "color": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "сategory.UpdateCategoryInput": {
+            "type": "object",
+            "properties": {
+                "color": {
+                    "type": "string"
+                },
                 "name": {
                     "type": "string"
                 }
