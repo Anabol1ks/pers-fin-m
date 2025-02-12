@@ -70,6 +70,7 @@ export default function TransactionsPage() {
 	const [isDialogOpen, setIsDialogOpen] = useState(false)
 	const { toast } = useToast()
 	const [isLoading, setIsLoading] = useState(true)
+	const [isDialogInfoOpen, setIsDialogInfoOpen] = useState(false)
 	const [transactions, setTransactions] = useState([])
 
 	// Состояние для новой транзакции
@@ -212,6 +213,25 @@ export default function TransactionsPage() {
 		// Загружаем категории при монтировании компонента
 		LoadCategories(setCategories, toast)
 	}, [])
+
+	const [selectedTransaction, setSelectedTransaction] = useState({
+		Amount: null as number | null,
+		BonusChange: null as number | null,
+		BonusType: null as 'income' | 'expense' | null,
+		Currency: 'RUB',
+		Date: new Date().toISOString(),
+		Title: '',
+		Description: '',
+		Category: null as number | null,
+		Type: null as 'income' | 'expense' | null,
+	})
+
+	const handleTransactionClick = (
+    transaction: any
+  ) => {
+    setSelectedTransaction(transaction)
+    setIsDialogInfoOpen(true)
+  }
 
 	return (
 		<>
@@ -433,6 +453,209 @@ export default function TransactionsPage() {
 							</DialogFooter>
 						</DialogContent>
 					</Dialog>
+					<Dialog open={isDialogInfoOpen} onOpenChange={setIsDialogInfoOpen}>
+						<DialogContent>
+							<DialogHeader>
+								<DialogTitle>Ваша транзакция</DialogTitle>
+								<DialogDescription>
+									Информация о вашей транзакции.
+								</DialogDescription>
+							</DialogHeader>
+							<div className='grid gap-4 py-4'>
+								<div className='grid gap-2'>
+									<Label htmlFor='name'>Название</Label>
+									<Input
+										id='name'
+										value={selectedTransaction.Title}
+										onChange={e =>
+											setSelectedTransaction({
+												...selectedTransaction,
+												Title: e.target.value,
+											})
+										}
+										placeholder='Название транзакции'
+									/>
+								</div>
+								<div className='grid gap-2'>
+									<Label htmlFor='desc'>Описание</Label>
+									<Input
+										id='desc'
+										value={selectedTransaction.Description}
+										onChange={e =>
+											setSelectedTransaction({
+												...selectedTransaction,
+												Description: e.target.value,
+											})
+										}
+										placeholder='Описание транзакции'
+									/>
+								</div>
+								<div className='grid gap-2'>
+									<Label htmlFor='amount'>Сумма</Label>
+									<div className='flex items-center gap-2'>
+										<Input
+											id='amount'
+											type='text'
+											value={
+												selectedTransaction.Amount === null
+													? ''
+													: selectedTransaction.Amount
+											}
+											onChange={e => {
+												const valueStr = e.target.value.trim()
+												if (!/^-?\d*\.?\d*$/.test(valueStr)) return
+												const value =
+													valueStr === '' ? null : parseFloat(valueStr)
+												setNewTransaction({
+													...newTransaction,
+													Amount: value === 0 ? null : value,
+												})
+											}}
+											placeholder='1000'
+											className='flex-1'
+										/>
+										<Select
+											onValueChange={value =>
+												setSelectedTransaction({
+													...selectedTransaction,
+													Currency: value,
+												})
+											}
+											value={selectedTransaction.Currency}
+										>
+											<SelectTrigger className='w-[80px]'>
+												<SelectValue placeholder='RUB' />
+											</SelectTrigger>
+											<SelectContent>
+												<SelectItem value='RUB'>RUB</SelectItem>
+												<SelectItem value='USD'>USD</SelectItem>
+												<SelectItem value='EUR'>EUR</SelectItem>
+											</SelectContent>
+										</Select>
+									</div>
+								</div>
+								<div className='grid grid-cols-2 gap-2'>
+									<div>
+										<Label htmlFor='category'>Категория</Label>
+										<Select
+											onValueChange={value =>
+												setSelectedTransaction({
+													...selectedTransaction,
+													Category: parseInt(value, 10),
+												})
+											}
+										>
+											<SelectTrigger className='w-full'>
+												<SelectValue placeholder='Выберите категорию' />
+											</SelectTrigger>
+											<SelectContent>
+												{categories.length > 0 ? (
+													categories.map(category => (
+														<SelectItem
+															key={category.ID}
+															value={String(category.ID)}
+														>
+															{category.Name}
+														</SelectItem>
+													))
+												) : (
+													<SelectItem value='0'>Нет категорий</SelectItem>
+												)}
+											</SelectContent>
+										</Select>
+									</div>
+									<div>
+										<Label htmlFor='type'>Тип</Label>
+										<Select
+											onValueChange={(value: 'income' | 'expense') =>
+												setSelectedTransaction({
+													...selectedTransaction,
+													Type: value,
+												})
+											}
+											value={selectedTransaction.Type ?? ''}
+										>
+											<SelectTrigger className='w-full'>
+												<SelectValue placeholder='Выберите тип' />
+											</SelectTrigger>
+											<SelectContent>
+												<SelectItem value='income'>Доход</SelectItem>
+												<SelectItem value='expense'>Расход</SelectItem>
+											</SelectContent>
+										</Select>
+									</div>
+								</div>
+								{/* Блок с датой и бонусами */}
+								<div className='grid gap-2'>
+									<div className='flex gap-2'>
+										<div>
+											<Label htmlFor='date'>Дата</Label>
+											<DatePicker
+												date={selectedTransaction.Date}
+												setDate={newDate => {
+													setDate(newDate)
+													setSelectedTransaction({
+														...selectedTransaction,
+														Date: newDate ? newDate.toISOString() : '',
+													})
+												}}
+											/>
+										</div>
+										<div>
+											<Label htmlFor='bonus'>Бонусы</Label>
+											<div className='flex items-center gap-2'>
+												<Input
+													id='bonus'
+													type='text'
+													value={
+														selectedTransaction.BonusChange === null
+															? ''
+															: selectedTransaction.BonusChange
+													}
+													onChange={e => {
+														const valueStr = e.target.value.trim()
+														if (!/^-?\d*\.?\d*$/.test(valueStr)) return
+														const value =
+															valueStr === '' ? null : parseFloat(valueStr)
+														setSelectedTransaction({
+															...selectedTransaction,
+															BonusChange: value === 0 ? null : value,
+															BonusType:
+																value === 0
+																	? null
+																	: selectedTransaction.BonusType,
+														})
+													}}
+													placeholder='0'
+													className='flex-1'
+												/>
+												<Select
+													onValueChange={value =>
+														setSelectedTransaction({
+															...selectedTransaction,
+															BonusType:
+																selectedTransaction.BonusChange === null
+																	? null
+																	: value,
+														})
+													}
+													value={selectedTransaction.BonusType ?? ''}
+												>
+													<SelectTrigger className='w-[80px]'>
+														<SelectValue placeholder='Тип' />
+													</SelectTrigger>
+													<SelectContent>
+														<SelectItem value='income'>+</SelectItem>
+														<SelectItem value='expense'>-</SelectItem>
+													</SelectContent>
+												</Select>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</DialogContent>
+					</Dialog>
 				</div>
 
 				<Card>
@@ -491,7 +714,13 @@ export default function TransactionsPage() {
 											cat => cat.ID === transaction.Category
 										)
 										return (
-											<TableRow key={transaction.ID}>
+											<TableRow
+												key={transaction.ID}
+												onClick={() => handleTransactionClick(transaction)}
+												role='button'
+												tabIndex={0}
+												className='cursor-pointer hover:zinc-800 transition-colors'
+											>
 												<TableCell>
 													{format(new Date(transaction.Date), 'd MMMM yyyy', {
 														locale: ru,
