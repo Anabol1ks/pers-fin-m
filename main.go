@@ -57,6 +57,7 @@ func main() {
 		authorized.Use(auth.AuthMiddleware())
 		authorized.POST("/transactions", transactions.CreateTransaction)
 		authorized.GET("/transactions", transactions.GetAllTransactions)
+		authorized.PUT("/transactions{:id}", transactions.UpdateTransaction)
 
 		authorized.GET("/categories", сategory.GetAllCategories)
 		authorized.POST("/categories", сategory.CreateCategory)

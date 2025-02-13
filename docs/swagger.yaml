@@ -86,6 +86,30 @@ definitions:
     - title
     - type
     type: object
+  transactions.TransactionUpdate:
+    properties:
+      amount:
+        type: integer
+      bonusChange:
+        type: number
+      category:
+        type: integer
+      currency:
+        type: string
+      date:
+        type: string
+      description:
+        type: string
+      title:
+        type: string
+      type:
+        enum:
+        - income
+        - expense
+        type: string
+      typeBonus:
+        type: string
+    type: object
   сategory.CreateCategoryInput:
     properties:
       color:
@@ -292,6 +316,26 @@ paths:
       tags:
       - Categories
   /transactions:
+    get:
+      description: Получить все транзакции пользователя
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список транзакций
+          schema:
+            items:
+              $ref: '#/definitions/transactions.TransactionInput'
+            type: array
+        "500":
+          description: Ошибка при получении транзакций
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Получить все транзакции пользователя
+      tags:
+      - Transactions
     post:
       consumes:
       - application/json
@@ -321,6 +365,47 @@ paths:
       security:
       - BearerAuth: []
       summary: Создать транзакцию
+      tags:
+      - Transactions
+  /transactions/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Обновляет существующую транзакцию пользователя
+      parameters:
+      - description: ID транзакции
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Данные для обновления транзакции
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/transactions.TransactionUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Обновленная транзакция
+          schema:
+            $ref: '#/definitions/transactions.TransactionInput'
+        "400":
+          description: Ошибка валидации или неверные данные
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Транзакция не найдена
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Ошибка обновления транзакции
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Обновить транзакцию
       tags:
       - Transactions
 securityDefinitions:

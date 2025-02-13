@@ -295,6 +295,38 @@
             }
         },
         "/transactions": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Получить все транзакции пользователя",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Получить все транзакции пользователя",
+                "responses": {
+                    "200": {
+                        "description": "Список транзакций",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/transactions.TransactionInput"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка при получении транзакций",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "post": {
                 "security": [
                     {
@@ -338,6 +370,70 @@
                     },
                     "500": {
                         "description": "Ошибка создания транзакции",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/transactions/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Обновляет существующую транзакцию пользователя",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Обновить транзакцию",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID транзакции",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Данные для обновления транзакции",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/transactions.TransactionUpdate"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Обновленная транзакция",
+                        "schema": {
+                            "$ref": "#/definitions/transactions.TransactionInput"
+                        }
+                    },
+                    "400": {
+                        "description": "Ошибка валидации или неверные данные",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Транзакция не найдена",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка обновления транзакции",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -442,6 +538,42 @@
                 "title",
                 "type"
             ],
+            "properties": {
+                "amount": {
+                    "type": "integer"
+                },
+                "bonusChange": {
+                    "type": "number"
+                },
+                "category": {
+                    "type": "integer"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "income",
+                        "expense"
+                    ]
+                },
+                "typeBonus": {
+                    "type": "string"
+                }
+            }
+        },
+        "transactions.TransactionUpdate": {
+            "type": "object",
             "properties": {
                 "amount": {
                     "type": "integer"

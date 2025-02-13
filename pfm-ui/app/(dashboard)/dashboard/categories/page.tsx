@@ -53,14 +53,7 @@ export default function CategoriesPage() {
 	})
 
 	const handlerUpdateCategory = async () => {
-		if (!categoryToUpdate.Name || !categoryToUpdate.Color) {
-			toast({
-				title: 'Ошибка',
-				description: 'Введите название и цвет категории',
-				variant: 'destructive',
-			})
-			return
-		}
+
 		try {
 			const response = await axios.put(
 				`${process.env.NEXT_PUBLIC_API_URL}/categories/${categoryToUpdate.ID}`,

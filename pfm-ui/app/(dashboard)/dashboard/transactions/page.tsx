@@ -86,6 +86,106 @@ export default function TransactionsPage() {
 		Type: null as 'income' | 'expense' | null,
 	})
 
+	const [transactionToUpdate, setTransactionToUpdate] = useState({
+		Amount: null as number | null,
+		BonusChange: null as number | null,
+		BonusType: null as 'income' | 'expense' | null,
+		Currency: 'RUB',
+		Date: new Date().toISOString(),
+		Title: '',
+		Description: '',
+		Category: null as number | null,
+		Type: null as 'income' | 'expense' | null,
+		ID: null,
+	})
+
+	const handleUpdateTransaction = async () => {
+		if (!newTransaction.Amount) {
+			toast({
+				title: 'Ошибка',
+				description: 'Сумма не может быть пустой',
+				variant: 'destructive',
+			})
+			return
+		}
+		if (!newTransaction.Title) {
+			toast({
+				title: 'Ошибка',
+				description: 'Название не может быть пустым',
+				variant: 'destructive',
+			})
+			return
+		}
+		if (!newTransaction.Category) {
+			toast({
+				title: 'Ошибка',
+				description: 'Категория не может быть пустой',
+				variant: 'destructive',
+			})
+			return
+		}
+		if (!newTransaction.Type) {
+			toast({
+				title: 'Ошибка',
+				description: 'Тип транзакции не может быть пустым',
+				variant: 'destructive',
+			})
+			return
+		}
+		if (!newTransaction.Date) {
+			toast({
+				title: 'Ошибка',
+				description: 'Дата не может быть пустой',
+				variant: 'destructive',
+			})
+			return
+		}
+		try {
+			const response = await axios.put(
+				`${process.env.NEXT_PUBLIC_API_URL}/transactions/${transactionToUpdate.ID}`,
+				newTransaction,
+				{
+					headers: {
+						Authorization: `Bearer ${Cookies.get('token')}`,
+					},
+				}
+			)
+			if (response.status === 200){
+				toast({
+					title: 'Успешно',
+					description: 'Транзакция успешно обновлена',
+					variant: 'default',
+				})
+				setIsLoading(true)
+			}else{
+				toast({
+					title: 'Ошибка',
+					description: 'Ошибка при обновлении транзакции',
+					variant: 'destructive',
+				})
+			}
+		} catch (error) {
+			toast({
+				title: 'Ошибка',
+				description: 'Не удалось обновить транзакцию',
+				variant: 'destructive',
+			})
+		}
+		setIsDialogOpen(false)
+		setTransactionToUpdate({
+			Amount: null,
+			BonusChange: null,
+			BonusType: null,
+			Currency: 'RUB',
+			Date: new Date().toISOString(),
+			Title: '',
+			Description: '',
+			Category: null,
+			Type: null,
+			ID: null,
+		})
+	}
+
 	// Состояние для DatePicker
 	const [date, setDate] = useState<Date>(new Date())
 
@@ -214,22 +314,12 @@ export default function TransactionsPage() {
 		LoadCategories(setCategories, toast)
 	}, [])
 
-	const [selectedTransaction, setSelectedTransaction] = useState({
-		Amount: null as number | null,
-		BonusChange: null as number | null,
-		BonusType: null as 'income' | 'expense' | null,
-		Currency: 'RUB',
-		Date: new Date().toISOString(),
-		Title: '',
-		Description: '',
-		Category: null as number | null,
-		Type: null as 'income' | 'expense' | null,
-	})
+
 
 	const handleTransactionClick = (
     transaction: any
   ) => {
-    setSelectedTransaction(transaction)
+    setTransactionToUpdate(transaction)
     setIsDialogInfoOpen(true)
   }
 
@@ -466,10 +556,10 @@ export default function TransactionsPage() {
 									<Label htmlFor='name'>Название</Label>
 									<Input
 										id='name'
-										value={selectedTransaction.Title}
+										value={transactionToUpdate.Title}
 										onChange={e =>
-											setSelectedTransaction({
-												...selectedTransaction,
+											setTransactionToUpdate({
+												...transactionToUpdate,
 												Title: e.target.value,
 											})
 										}
@@ -480,10 +570,10 @@ export default function TransactionsPage() {
 									<Label htmlFor='desc'>Описание</Label>
 									<Input
 										id='desc'
-										value={selectedTransaction.Description}
+										value={transactionToUpdate.Description}
 										onChange={e =>
-											setSelectedTransaction({
-												...selectedTransaction,
+											setTransactionToUpdate({
+												...transactionToUpdate,
 												Description: e.target.value,
 											})
 										}
@@ -497,9 +587,9 @@ export default function TransactionsPage() {
 											id='amount'
 											type='text'
 											value={
-												selectedTransaction.Amount === null
+												transactionToUpdate.Amount === null
 													? ''
-													: selectedTransaction.Amount
+													: transactionToUpdate.Amount
 											}
 											onChange={e => {
 												const valueStr = e.target.value.trim()
@@ -516,12 +606,12 @@ export default function TransactionsPage() {
 										/>
 										<Select
 											onValueChange={value =>
-												setSelectedTransaction({
-													...selectedTransaction,
+												setTransactionToUpdate({
+													...transactionToUpdate,
 													Currency: value,
 												})
 											}
-											value={selectedTransaction.Currency}
+											value={transactionToUpdate.Currency}
 										>
 											<SelectTrigger className='w-[80px]'>
 												<SelectValue placeholder='RUB' />
@@ -539,8 +629,8 @@ export default function TransactionsPage() {
 										<Label htmlFor='category'>Категория</Label>
 										<Select
 											onValueChange={value =>
-												setSelectedTransaction({
-													...selectedTransaction,
+												setTransactionToUpdate({
+													...transactionToUpdate,
 													Category: parseInt(value, 10),
 												})
 											}
@@ -568,12 +658,12 @@ export default function TransactionsPage() {
 										<Label htmlFor='type'>Тип</Label>
 										<Select
 											onValueChange={(value: 'income' | 'expense') =>
-												setSelectedTransaction({
-													...selectedTransaction,
+												setTransactionToUpdate({
+													...transactionToUpdate,
 													Type: value,
 												})
 											}
-											value={selectedTransaction.Type ?? ''}
+											value={transactionToUpdate.Type ?? ''}
 										>
 											<SelectTrigger className='w-full'>
 												<SelectValue placeholder='Выберите тип' />
@@ -591,11 +681,11 @@ export default function TransactionsPage() {
 										<div>
 											<Label htmlFor='date'>Дата</Label>
 											<DatePicker
-												date={selectedTransaction.Date}
+												date={transactionToUpdate.Date}
 												setDate={newDate => {
 													setDate(newDate)
-													setSelectedTransaction({
-														...selectedTransaction,
+													setTransactionToUpdate({
+														...transactionToUpdate,
 														Date: newDate ? newDate.toISOString() : '',
 													})
 												}}
@@ -608,22 +698,22 @@ export default function TransactionsPage() {
 													id='bonus'
 													type='text'
 													value={
-														selectedTransaction.BonusChange === null
+														transactionToUpdate.BonusChange === null
 															? ''
-															: selectedTransaction.BonusChange
+															: transactionToUpdate.BonusChange
 													}
 													onChange={e => {
 														const valueStr = e.target.value.trim()
 														if (!/^-?\d*\.?\d*$/.test(valueStr)) return
 														const value =
 															valueStr === '' ? null : parseFloat(valueStr)
-														setSelectedTransaction({
-															...selectedTransaction,
+														setTransactionToUpdate({
+															...transactionToUpdate,
 															BonusChange: value === 0 ? null : value,
 															BonusType:
 																value === 0
 																	? null
-																	: selectedTransaction.BonusType,
+																	: transactionToUpdate.BonusType,
 														})
 													}}
 													placeholder='0'
@@ -631,15 +721,15 @@ export default function TransactionsPage() {
 												/>
 												<Select
 													onValueChange={value =>
-														setSelectedTransaction({
-															...selectedTransaction,
+														setTransactionToUpdate({
+															...transactionToUpdate,
 															BonusType:
-																selectedTransaction.BonusChange === null
+																transactionToUpdate.BonusChange === null
 																	? null
 																	: value,
 														})
 													}
-													value={selectedTransaction.BonusType ?? ''}
+													value={transactionToUpdate.BonusType ?? ''}
 												>
 													<SelectTrigger className='w-[80px]'>
 														<SelectValue placeholder='Тип' />
@@ -654,6 +744,9 @@ export default function TransactionsPage() {
 									</div>
 								</div>
 							</div>
+							<DialogFooter>
+								<Button onClick={handleUpdateTransaction}>Сохранить</Button>
+							</DialogFooter>
 						</DialogContent>
 					</Dialog>
 				</div>
