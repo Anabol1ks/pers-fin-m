@@ -101,26 +101,28 @@ func CreateTransaction(c *gin.Context) {
 	c.JSON(http.StatusCreated, transaction)
 }
 
-// @Security BearerAuth
-// GetAllTransactions godoc
-// @Summary Получить все транзакции пользователя
-// @Description Получить все транзакции пользователя
-// @Tags Transactions
-// @Produce json
-// @Success 200 {array} TransactionInput "Список транзакций"
-// @Failure 500 {object} response.ErrorResponse "Ошибка при получении транзакций"
-// @Router /transactions [get]
-func GetAllTransactions(c *gin.Context) {
-	userID := c.GetUint("userID")
+// // @Security BearerAuth
+// // GetAllTransactions godoc
+// // @Summary Получить все транзакции пользователя
+// // @Description Получить все транзакции пользователя
+// // @Tags Transactions
+// // @Produce json
+// // @Success 200 {array} TransactionInput "Список транзакций"
+// // @Failure 500 {object} response.ErrorResponse "Ошибка при получении транзакций"
+// // @Router /transactions [get]
+// func GetAllTransactions(c *gin.Context) {
+// 	userID := c.GetUint("userID")
 
-	var transactions []models.Transaction
-	if err := storage.DB.Where("user_id = ?", userID).Find(&transactions).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при получении транзакций"})
-		return
-	}
+// 	var transactions []models.Transaction
+// 	if err := storage.DB.Where("user_id = ?", userID).Find(&transactions).Error; err != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при получении транзакций"})
+// 		return
+// 	}
 
-	c.JSON(http.StatusOK, transactions)
-}
+// 	c.JSON(http.StatusOK, transactions)
+// }
+
+// ВОЗМОЖНО ЭТО НЕ НУЖНО
 
 type TransactionUpdate struct {
 	Amount      *int       `json:"amount"`
@@ -249,4 +251,143 @@ func UpdateTransaction(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, transaction)
+}
+
+// @Security BearerAuth
+// DeleteTransaction godoc
+// @Summary Удалить транзакцию
+// @Description Удаляет транзакцию пользователя по ее ID
+// @Tags Transactions
+// @Produce json
+// @Param id path string true "ID транзакции"
+// @Success 200 {object} response.SuccessResponse "Транзакция удалена"
+// @Failure 404 {object} response.ErrorResponse "Транзакция не найдена"
+// @Failure 500 {object} response.ErrorResponse "Ошибка при удалении транзакции"
+// @Router /transactions/{id} [delete]
+func DelTransactions(c *gin.Context) {
+	userID := c.GetUint("userID")
+	transactionID := c.Param("id")
+
+	var transaction models.Transaction
+	if err := storage.DB.Where("id = ? AND user_id = ?", transactionID, userID).First(&transaction).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Транзакция не найдена"})
+		return
+	}
+
+	if err := storage.DB.Delete(&transaction).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при удалении транзакции"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Транзакция удалена"})
+}
+
+// TransactionSearchInput определяет фильтры поиска транзакций.
+// Все поля опциональные.
+type TransactionSearchInput struct {
+	Title       *string    `form:"title"`
+	Description *string    `form:"description"`
+	Amount      *int       `form:"amount"`
+	BonusChange *float64   `form:"bonusChange"`
+	Date        *time.Time `form:"date"`
+	Category    *uint      `form:"category"`
+	Type        *string    `form:"type"`
+	BonusType   *string    `form:"typeBonus"`
+}
+
+// SearchTransactions godoc
+// @Security BearerAuth
+// @Summary Поиск транзакций
+// @Description Ищет транзакции пользователя по различным опциональным параметрам
+// @Tags Transactions
+// @Produce json
+// @Param title query string false "Название транзакции (частичное совпадение)"
+// @Param amount query int false "Приблизительная сумма транзакции"
+// @Param bonusChange query number false "Приблизительное количество бонусов"
+// @Param date query string false "Дата транзакции (формат YYYY-MM-DD)"
+// @Param category query int false "ID категории"
+// @Param type query string false "Тип транзакции (income или expense)"
+// @Param typeBonus query string false "Тип бонуса"
+// @Success 200 {array} TransactionInput "Найденные транзакции"
+// @Failure 500 {object} response.ErrorResponse "Ошибка при поиске транзакций"
+// @Router /transactions/search [get]
+func SearchTransactions(c *gin.Context) {
+	userID := c.GetUint("userID")
+
+	var input TransactionSearchInput
+	if err := c.ShouldBindQuery(&input); err != nil {
+		log.Println("Ошибка валидации параметров запроса:", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Начинаем строить запрос с обязательным условием по пользователю
+	query := storage.DB.Where("user_id = ?", userID)
+
+	// Фильтрация по названию (частичное совпадение)
+	if input.Title != nil && *input.Title != "" {
+		// Для PostgreSQL можно использовать ILIKE для регистронезависимого поиска
+		query = query.Where("title ILIKE ?", "%"+*input.Title+"%")
+	}
+
+	// Фильтрация по описанию (частичное совпадение)
+	if input.Description != nil && *input.Description != "" {
+		query = query.Where("description ILIKE ?", "%"+*input.Description+"%")
+	}
+
+	// Фильтрация по сумме с допуском ±10%
+	if input.Amount != nil {
+		tol := int(float64(*input.Amount) * 0.1)
+		if tol < 1 {
+			tol = 1
+		}
+		min := *input.Amount - tol
+		max := *input.Amount + tol
+		query = query.Where("amount BETWEEN ? AND ?", min, max)
+	}
+
+	// Фильтрация по бонусам с допуском ±10%
+	if input.BonusChange != nil {
+		tol := *input.BonusChange * 0.1
+		if tol < 0.1 {
+			tol = 0.1
+		}
+		min := *input.BonusChange - tol
+		max := *input.BonusChange + tol
+		query = query.Where("bonus_change BETWEEN ? AND ?", min, max)
+	}
+
+	// Фильтрация по дате (ищем транзакции в пределах указанного дня)
+	if input.Date != nil {
+		// Определяем начало и конец дня
+		year, month, day := input.Date.Date()
+		loc := input.Date.Location()
+		start := time.Date(year, month, day, 0, 0, 0, 0, loc)
+		end := start.Add(24 * time.Hour)
+		query = query.Where("date >= ? AND date < ?", start, end)
+	}
+
+	// Фильтрация по категории
+	if input.Category != nil {
+		query = query.Where("category = ?", *input.Category)
+	}
+
+	// Фильтрация по типу транзакции
+	if input.Type != nil && *input.Type != "" {
+		query = query.Where("type = ?", *input.Type)
+	}
+
+	// Фильтрация по типу бонуса
+	if input.BonusType != nil && *input.BonusType != "" {
+		query = query.Where("bonus_type = ?", *input.BonusType)
+	}
+
+	var transactions []models.Transaction
+	if err := query.Order("date DESC").Find(&transactions).Error; err != nil {
+		log.Println("Ошибка при поиске транзакций:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при поиске транзакций"})
+		return
+	}
+
+	c.JSON(http.StatusOK, transactions)
 }

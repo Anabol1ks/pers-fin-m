@@ -84,6 +84,7 @@ func CreateCategory(c *gin.Context) {
 // @Produce json
 // @Param id path string true "ID категории"
 // @Success 200 {object} response.SuccessResponse "Категория успешно удалена"
+// @Failure 404 {object} response.ErrorResponse "Категория не найдена или не принадлежит пользователю"
 // @Failure 500 {object} response.ErrorResponse "Ошибка удаления категории"
 // @Router /categories/{id} [delete]
 func DelCategory(c *gin.Context) {
@@ -96,12 +97,18 @@ func DelCategory(c *gin.Context) {
 		return
 	}
 
+	var category models.Category
+	if err := storage.DB.Where("id = ? AND user_id = ?", categoryID, userID).First(&category).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Категория не найдена или не принадлежит пользователю"})
+		return
+	}
+
 	if err := storage.DB.Model(&models.Transaction{}).Where("category = ? AND user_id = ?", categoryID, userID).Update("category", uncategorized.ID).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при обновлении транзакций"})
 		return
 	}
 
-	if err := storage.DB.Where("id = ? AND user_id = ?", categoryID, userID).Delete(&models.Category{}).Error; err != nil {
+	if err := storage.DB.Delete(category).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при удалении категории"})
 		return
 	}

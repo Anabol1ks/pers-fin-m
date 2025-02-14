@@ -266,6 +266,10 @@ paths:
           description: Категория успешно удалена
           schema:
             $ref: '#/definitions/response.SuccessResponse'
+        "404":
+          description: Категория не найдена или не принадлежит пользователю
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Ошибка удаления категории
           schema:
@@ -368,6 +372,34 @@ paths:
       tags:
       - Transactions
   /transactions/{id}:
+    delete:
+      description: Удаляет транзакцию пользователя по ее ID
+      parameters:
+      - description: ID транзакции
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Транзакция удалена
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "404":
+          description: Транзакция не найдена
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Ошибка при удалении транзакции
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Удалить транзакцию
+      tags:
+      - Transactions
     put:
       consumes:
       - application/json
@@ -406,6 +438,56 @@ paths:
       security:
       - BearerAuth: []
       summary: Обновить транзакцию
+      tags:
+      - Transactions
+  /transactions/search:
+    get:
+      description: Ищет транзакции пользователя по различным опциональным параметрам
+      parameters:
+      - description: Название транзакции (частичное совпадение)
+        in: query
+        name: title
+        type: string
+      - description: Приблизительная сумма транзакции
+        in: query
+        name: amount
+        type: integer
+      - description: Приблизительное количество бонусов
+        in: query
+        name: bonusChange
+        type: number
+      - description: Дата транзакции (формат YYYY-MM-DD)
+        in: query
+        name: date
+        type: string
+      - description: ID категории
+        in: query
+        name: category
+        type: integer
+      - description: Тип транзакции (income или expense)
+        in: query
+        name: type
+        type: string
+      - description: Тип бонуса
+        in: query
+        name: typeBonus
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Найденные транзакции
+          schema:
+            items:
+              $ref: '#/definitions/transactions.TransactionInput'
+            type: array
+        "500":
+          description: Ошибка при поиске транзакций
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Поиск транзакций
       tags:
       - Transactions
 securityDefinitions:

@@ -96,11 +96,11 @@ export default function TransactionsPage() {
 		Description: '',
 		Category: null as number | null,
 		Type: null as 'income' | 'expense' | null,
-		ID: null,
+		ID: null as number | null,
 	})
 
 	const handleUpdateTransaction = async () => {
-		if (!newTransaction.Amount) {
+		if (!transactionToUpdate.Amount) {
 			toast({
 				title: 'Ошибка',
 				description: 'Сумма не может быть пустой',
@@ -108,7 +108,7 @@ export default function TransactionsPage() {
 			})
 			return
 		}
-		if (!newTransaction.Title) {
+		if (!transactionToUpdate.Title) {
 			toast({
 				title: 'Ошибка',
 				description: 'Название не может быть пустым',
@@ -116,7 +116,7 @@ export default function TransactionsPage() {
 			})
 			return
 		}
-		if (!newTransaction.Category) {
+		if (!transactionToUpdate.Category) {
 			toast({
 				title: 'Ошибка',
 				description: 'Категория не может быть пустой',
@@ -124,7 +124,7 @@ export default function TransactionsPage() {
 			})
 			return
 		}
-		if (!newTransaction.Type) {
+		if (!transactionToUpdate.Type) {
 			toast({
 				title: 'Ошибка',
 				description: 'Тип транзакции не может быть пустым',
@@ -132,7 +132,7 @@ export default function TransactionsPage() {
 			})
 			return
 		}
-		if (!newTransaction.Date) {
+		if (!transactionToUpdate.Date) {
 			toast({
 				title: 'Ошибка',
 				description: 'Дата не может быть пустой',
@@ -143,24 +143,37 @@ export default function TransactionsPage() {
 		try {
 			const response = await axios.put(
 				`${process.env.NEXT_PUBLIC_API_URL}/transactions/${transactionToUpdate.ID}`,
-				newTransaction,
+				{
+					// Приводим данные к формату API
+					amount: transactionToUpdate.Amount,
+					title: transactionToUpdate.Title,
+					description: transactionToUpdate.Description,
+					category: transactionToUpdate.Category,
+					type: transactionToUpdate.Type,
+					date: transactionToUpdate.Date,
+					currency: transactionToUpdate.Currency,
+					bonusChange: transactionToUpdate.BonusChange,
+					typeBonus: transactionToUpdate.BonusType,
+				},
 				{
 					headers: {
 						Authorization: `Bearer ${Cookies.get('token')}`,
 					},
 				}
 			)
-			if (response.status === 200){
+			if (response.status === 200) {
+				setIsDialogInfoOpen(false)
 				toast({
 					title: 'Успешно',
 					description: 'Транзакция успешно обновлена',
 					variant: 'default',
 				})
 				setIsLoading(true)
-			}else{
+			} else {
 				toast({
 					title: 'Ошибка',
-					description: 'Ошибка при обновлении транзакции',
+					description:
+						response.data.error || 'Ошибка при обновлении транзакции',
 					variant: 'destructive',
 				})
 			}
@@ -266,11 +279,74 @@ export default function TransactionsPage() {
 		}
 	}
 
-	useEffect(() => {
+	const [deleteTransactionId, setDeleteTransactionId] = useState(null)
+	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+
+	const handleDeleteTransaction = async () => {
+		if (!deleteTransactionId) {
+			toast({
+				title: 'Ошибка',
+				description: 'Не выбрана транзакция для удаления',
+				variant: 'destructive',
+			})
+			return
+		}
+		 try {
+				const response = await axios.delete(
+					`${process.env.NEXT_PUBLIC_API_URL}/transactions/${transactionToUpdate.ID}`,
+					{
+						headers: {
+							Authorization: `Bearer ${Cookies.get('token')}`,
+						},
+					}
+				)
+				if (response.status === 200) {
+					setIsLoading(true)
+					setIsDialogInfoOpen(false)
+					toast({
+						title: 'Успех',
+						description: 'Транзакция успешно удалена',
+					})
+				} else {
+					toast({
+						title: 'Ошибка',
+						description:
+							response.data.error || 'Произошла ошибка при удалении транзакции',
+						variant: 'destructive',
+					})
+				}
+			} catch (error) {
+				console.error('Ошибка при удалении транзакции:', error)
+				toast({
+					title: 'Ошибка',
+					description: 'Произошла ошибка при удалении транзакции',
+					variant: 'destructive',
+				})
+			}
+		setIsDeleteDialogOpen(false)
+		setIsDialogInfoOpen(false)
+		setTransactionToUpdate({
+			Amount: null,
+			BonusChange: null,
+			BonusType: null,
+			Currency: 'RUB',
+			Date: new Date().toISOString(),
+			Title: '',
+			Description: '',
+			Category: null,
+			Type: null,
+			ID: null,
+		})
+		setDeleteTransactionId(null)
+	}
+
+
+
+	useEffect(() => {	
 		const loadTransactions = async () => {
 			try {
 				const response = await axios.get(
-					`${process.env.NEXT_PUBLIC_API_URL}/transactions`,
+					`${process.env.NEXT_PUBLIC_API_URL}/transactions/search`,
 					{
 						headers: {
 							Authorization: `Bearer ${Cookies.get('token')}`,
@@ -280,6 +356,7 @@ export default function TransactionsPage() {
 				if (response.status === 200) {
 					setTransactions(response.data)
 					console.log(response.data)
+					setIsLoading(false)
 					return response.data
 				} else {
 					toast({
@@ -314,14 +391,22 @@ export default function TransactionsPage() {
 		LoadCategories(setCategories, toast)
 	}, [])
 
-
-
-	const handleTransactionClick = (
-    transaction: any
-  ) => {
-    setTransactionToUpdate(transaction)
-    setIsDialogInfoOpen(true)
-  }
+	const handleTransactionClick = (transaction: any) => {
+		// Make sure we're setting the correct ID from the transaction
+		setTransactionToUpdate({
+			Amount: transaction.Amount,
+			BonusChange: transaction.BonusChange,
+			BonusType: transaction.BonusType,
+			Currency: transaction.Currency,
+			Date: transaction.Date,
+			Title: transaction.Title,
+			Description: transaction.Description,
+			Category: transaction.Category,
+			Type: transaction.Type,
+			ID: transaction.ID, // This needs to be the correct ID from your transaction
+		})
+		setIsDialogInfoOpen(true)
+	}
 
 	return (
 		<>
@@ -384,7 +469,7 @@ export default function TransactionsPage() {
 											}
 											onChange={e => {
 												const valueStr = e.target.value.trim()
-												if (!/^-?\d*\.?\d*$/.test(valueStr)) return
+												if (!/^-?\d*?\d*$/.test(valueStr)) return
 												const value =
 													valueStr === '' ? null : parseFloat(valueStr)
 												setNewTransaction({
@@ -596,8 +681,8 @@ export default function TransactionsPage() {
 												if (!/^-?\d*\.?\d*$/.test(valueStr)) return
 												const value =
 													valueStr === '' ? null : parseFloat(valueStr)
-												setNewTransaction({
-													...newTransaction,
+												setTransactionToUpdate({
+													...transactionToUpdate,
 													Amount: value === 0 ? null : value,
 												})
 											}}
@@ -681,12 +766,13 @@ export default function TransactionsPage() {
 										<div>
 											<Label htmlFor='date'>Дата</Label>
 											<DatePicker
-												date={transactionToUpdate.Date}
+												date={new Date(transactionToUpdate.Date)} // Преобразуем строку в Date
 												setDate={newDate => {
-													setDate(newDate)
 													setTransactionToUpdate({
 														...transactionToUpdate,
-														Date: newDate ? newDate.toISOString() : '',
+														Date: newDate
+															? newDate.toISOString()
+															: new Date().toISOString(),
 													})
 												}}
 											/>
@@ -711,9 +797,9 @@ export default function TransactionsPage() {
 															...transactionToUpdate,
 															BonusChange: value === 0 ? null : value,
 															BonusType:
-																value === 0
-																	? null
-																	: transactionToUpdate.BonusType,
+																value !== null
+																	? transactionToUpdate.BonusType
+																	: null,
 														})
 													}}
 													placeholder='0'
@@ -745,6 +831,15 @@ export default function TransactionsPage() {
 								</div>
 							</div>
 							<DialogFooter>
+								<Button
+									variant='destructive'
+									onClick={() => {
+										setDeleteTransactionId(transactionToUpdate.ID)
+										setIsDeleteDialogOpen(true)
+									}}
+								>
+									Удалить
+								</Button>
 								<Button onClick={handleUpdateTransaction}>Сохранить</Button>
 							</DialogFooter>
 						</DialogContent>
@@ -867,6 +962,27 @@ export default function TransactionsPage() {
 					</CardContent>
 				</Card>
 			</div>
+			<Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Удалить категорию?</DialogTitle>
+					</DialogHeader>
+					<p>
+						Вы уверены, что хотите удалить эту транзакцию? Действие необратимо.
+					</p>
+					<DialogFooter>
+						<Button
+							variant='outline'
+							onClick={() => setIsDeleteDialogOpen(false)}
+						>
+							Отмена
+						</Button>
+						<Button variant='destructive' onClick={handleDeleteTransaction}>
+							Удалить
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 		</>
 	)
 }

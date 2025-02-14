@@ -285,6 +285,12 @@
                             "$ref": "#/definitions/response.SuccessResponse"
                         }
                     },
+                    "404": {
+                        "description": "Категория не найдена или не принадлежит пользователю",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Ошибка удаления категории",
                         "schema": {
@@ -377,6 +383,84 @@
                 }
             }
         },
+        "/transactions/search": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Ищет транзакции пользователя по различным опциональным параметрам",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Поиск транзакций",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Название транзакции (частичное совпадение)",
+                        "name": "title",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Приблизительная сумма транзакции",
+                        "name": "amount",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "description": "Приблизительное количество бонусов",
+                        "name": "bonusChange",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Дата транзакции (формат YYYY-MM-DD)",
+                        "name": "date",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID категории",
+                        "name": "category",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Тип транзакции (income или expense)",
+                        "name": "type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Тип бонуса",
+                        "name": "typeBonus",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Найденные транзакции",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/transactions.TransactionInput"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка при поиске транзакций",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/transactions/{id}": {
             "put": {
                 "security": [
@@ -434,6 +518,50 @@
                     },
                     "500": {
                         "description": "Ошибка обновления транзакции",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Удаляет транзакцию пользователя по ее ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Удалить транзакцию",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID транзакции",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Транзакция удалена",
+                        "schema": {
+                            "$ref": "#/definitions/response.SuccessResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Транзакция не найдена",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка при удалении транзакции",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
