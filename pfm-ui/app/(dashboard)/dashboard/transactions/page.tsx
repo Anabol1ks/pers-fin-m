@@ -100,7 +100,7 @@ export default function TransactionsPage() {
 	})
 
 	const handleUpdateTransaction = async () => {
-		if (!newTransaction.Amount) {
+		if (!transactionToUpdate.Amount) {
 			toast({
 				title: 'Ошибка',
 				description: 'Сумма не может быть пустой',
@@ -108,7 +108,7 @@ export default function TransactionsPage() {
 			})
 			return
 		}
-		if (!newTransaction.Title) {
+		if (!transactionToUpdate.Title) {
 			toast({
 				title: 'Ошибка',
 				description: 'Название не может быть пустым',
@@ -116,7 +116,7 @@ export default function TransactionsPage() {
 			})
 			return
 		}
-		if (!newTransaction.Category) {
+		if (!transactionToUpdate.Category) {
 			toast({
 				title: 'Ошибка',
 				description: 'Категория не может быть пустой',
@@ -124,7 +124,7 @@ export default function TransactionsPage() {
 			})
 			return
 		}
-		if (!newTransaction.Type) {
+		if (!transactionToUpdate.Type) {
 			toast({
 				title: 'Ошибка',
 				description: 'Тип транзакции не может быть пустым',
@@ -132,7 +132,7 @@ export default function TransactionsPage() {
 			})
 			return
 		}
-		if (!newTransaction.Date) {
+		if (!transactionToUpdate.Date) {
 			toast({
 				title: 'Ошибка',
 				description: 'Дата не может быть пустой',
@@ -143,7 +143,7 @@ export default function TransactionsPage() {
 		try {
 			const response = await axios.put(
 				`${process.env.NEXT_PUBLIC_API_URL}/transactions/${transactionToUpdate.ID}`,
-				newTransaction,
+				transactionToUpdate,
 				{
 					headers: {
 						Authorization: `Bearer ${Cookies.get('token')}`,
@@ -151,6 +151,7 @@ export default function TransactionsPage() {
 				}
 			)
 			if (response.status === 200){
+				setIsDialogInfoOpen(false)
 				toast({
 					title: 'Успешно',
 					description: 'Транзакция успешно обновлена',
@@ -160,7 +161,7 @@ export default function TransactionsPage() {
 			}else{
 				toast({
 					title: 'Ошибка',
-					description: 'Ошибка при обновлении транзакции',
+					description: response.data.error || 'Ошибка при обновлении транзакции',
 					variant: 'destructive',
 				})
 			}
@@ -280,6 +281,7 @@ export default function TransactionsPage() {
 				if (response.status === 200) {
 					setTransactions(response.data)
 					console.log(response.data)
+					setIsLoading(false)
 					return response.data
 				} else {
 					toast({
@@ -384,7 +386,7 @@ export default function TransactionsPage() {
 											}
 											onChange={e => {
 												const valueStr = e.target.value.trim()
-												if (!/^-?\d*\.?\d*$/.test(valueStr)) return
+												if (!/^-?\d*?\d*$/.test(valueStr)) return
 												const value =
 													valueStr === '' ? null : parseFloat(valueStr)
 												setNewTransaction({
@@ -596,8 +598,8 @@ export default function TransactionsPage() {
 												if (!/^-?\d*\.?\d*$/.test(valueStr)) return
 												const value =
 													valueStr === '' ? null : parseFloat(valueStr)
-												setNewTransaction({
-													...newTransaction,
+												setTransactionToUpdate({
+													...transactionToUpdate,
 													Amount: value === 0 ? null : value,
 												})
 											}}
@@ -681,12 +683,13 @@ export default function TransactionsPage() {
 										<div>
 											<Label htmlFor='date'>Дата</Label>
 											<DatePicker
-												date={transactionToUpdate.Date}
+												date={new Date(transactionToUpdate.Date)} // Преобразуем строку в Date
 												setDate={newDate => {
-													setDate(newDate)
 													setTransactionToUpdate({
 														...transactionToUpdate,
-														Date: newDate ? newDate.toISOString() : '',
+														Date: newDate
+															? newDate.toISOString()
+															: new Date().toISOString(),
 													})
 												}}
 											/>
@@ -711,9 +714,9 @@ export default function TransactionsPage() {
 															...transactionToUpdate,
 															BonusChange: value === 0 ? null : value,
 															BonusType:
-																value === 0
-																	? null
-																	: transactionToUpdate.BonusType,
+																value !== null
+																	? transactionToUpdate.BonusType
+																	: null,
 														})
 													}}
 													placeholder='0'
