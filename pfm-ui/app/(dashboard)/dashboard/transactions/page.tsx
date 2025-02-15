@@ -38,6 +38,7 @@ import { Label } from '@/components/ui/label'
 import { DatePicker } from '@/components/ui/DatePick'
 import axios from 'axios'
 import Cookies from 'js-cookie'
+import { DialogClose } from '@radix-ui/react-dialog'
 
 const transactionsData = [
 	{
@@ -341,31 +342,55 @@ export default function TransactionsPage() {
 	}
 
 
+	const [advancedFilters, setAdvancedFilters] = useState({
+		description: '',
+		amount: null as number | null,
+		bonusChange: null as number | null,
+		date: null as Date | null,
+		type: 'all' as 'income' | 'expense' | 'all',
+		bonusType: 'all' as 'income' | 'expense' | 'all',
+	})
 
-	useEffect(() => {	
+	// Локальные состояния для диалога фильтров
+	const [localDescription, setLocalDescription] = useState('')
+	const [localAmount, setLocalAmount] = useState<number | null>(null)
+	const [localBonusChange, setLocalBonusChange] = useState<number | null>(null)
+	const [localDate, setLocalDate] = useState<Date | null>(null)
+	const [localType, setLocalType] = useState<'all' | 'income' | 'expense'>(
+		'all'
+	)
+	const [localBonusType, setLocalBonusType] = useState<
+		'all' | 'income' | 'expense'
+	>('all')
+
+	useEffect(() => {
 		const loadTransactions = async () => {
 			try {
+				const params = {
+					title: searchTerm || undefined,
+					description: advancedFilters.description || undefined,
+					amount: advancedFilters.amount || undefined,
+					bonusChange: advancedFilters.bonusChange || undefined,
+					date: advancedFilters.date
+						? new Date(advancedFilters.date).toISOString()
+						: undefined,
+					category: categoryFilter !== 'all' ? categoryFilter : undefined,
+					type:
+						advancedFilters.type !== 'all' ? advancedFilters.type : undefined,
+					typeBonus:
+						advancedFilters.bonusType !== 'all'
+							? advancedFilters.bonusType
+							: undefined,
+				}
+
 				const response = await axios.get(
 					`${process.env.NEXT_PUBLIC_API_URL}/transactions/search`,
 					{
-						headers: {
-							Authorization: `Bearer ${Cookies.get('token')}`,
-						},
+						params,
+						headers: { Authorization: `Bearer ${Cookies.get('token')}` },
 					}
 				)
-				if (response.status === 200) {
-					setTransactions(response.data)
-					console.log(response.data)
-					setIsLoading(false)
-					return response.data
-				} else {
-					toast({
-						title: 'Ошибка',
-						description: 'Не удалось загрузить транзакции',
-						variant: 'destructive',
-					})
-					return []
-				}
+				setTransactions(response.data)
 			} catch (error) {
 				console.error('Ошибка при загрузке транзакций:', error)
 				toast({
@@ -373,11 +398,10 @@ export default function TransactionsPage() {
 					description: 'Не удалось загрузить транзакции',
 					variant: 'destructive',
 				})
-				return []
 			}
 		}
 		loadTransactions()
-	}, [isLoading])
+	}, [searchTerm, categoryFilter, advancedFilters, isLoading])
 
 	useEffect(() => {
 		// При открытии диалога устанавливаем текущую дату
@@ -866,98 +890,230 @@ export default function TransactionsPage() {
 									value={categoryFilter}
 									onValueChange={setCategoryFilter}
 								>
-									<SelectTrigger className='w-[180px]'>
-										<SelectValue placeholder='Category' />
+									<SelectTrigger>
+										<SelectValue placeholder='Категория' />
 									</SelectTrigger>
 									<SelectContent>
-										<SelectItem value='all'>All Categories</SelectItem>
+										<SelectItem value='all'>Все категории</SelectItem>
 										{categories.map(category => (
-											<SelectItem key={category.ID} value={category.Name}>
+											<SelectItem key={category.ID} value={String(category.ID)}>
 												{category.Name}
 											</SelectItem>
 										))}
 									</SelectContent>
 								</Select>
-								<Button variant='outline'>
-									<Filter className='mr-2 h-4 w-4' /> Filters
-								</Button>
+								<Dialog>
+									<DialogTrigger asChild>
+										<Button variant='outline'>
+											<Filter className='mr-2 h-4 w-4' /> Filters
+										</Button>
+									</DialogTrigger>
+									<DialogContent>
+										<DialogHeader>
+											<DialogTitle>Фильтры</DialogTitle>
+										</DialogHeader>
+										<div className='space-y-4'>
+											<div>
+												<Label>Описание</Label>
+												<Input
+													value={localDescription}
+													onChange={e => setLocalDescription(e.target.value)}
+													placeholder='Поиск по описанию'
+												/>
+											</div>
+											<div>
+												<Label>Сумма</Label>
+												<Input
+													type='number'
+													value={localAmount ?? ''}
+													onChange={e =>
+														setLocalAmount(
+															e.target.value ? Number(e.target.value) : null
+														)
+													}
+													placeholder='Сумма'
+												/>
+											</div>
+											<div>
+												<Label>Бонусы</Label>
+												<Input
+													type='number'
+													value={localBonusChange ?? ''}
+													onChange={e =>
+														setLocalBonusChange(
+															e.target.value ? Number(e.target.value) : null
+														)
+													}
+													placeholder='Бонусы'
+												/>
+											</div>
+											<div>
+												<Label>Дата</Label>
+												<DatePicker
+													date={localDate ? new Date(localDate) : null}
+													setDate={newDate => {
+														setLocalDate(newDate ? newDate.toISOString() : null)
+													}}
+												/>
+											</div>
+											<div>
+												<Label>Тип транзакции</Label>
+												<Select
+													value={localType}
+													onValueChange={value => setLocalType(value as any)}
+												>
+													<SelectTrigger>
+														<SelectValue placeholder='Тип' />
+													</SelectTrigger>
+													<SelectContent>
+														<SelectItem value='all'>Все</SelectItem>
+														<SelectItem value='income'>Доход</SelectItem>
+														<SelectItem value='expense'>Расход</SelectItem>
+													</SelectContent>
+												</Select>
+											</div>
+											<div>
+												<Label>Тип бонуса</Label>
+												<Select
+													value={localBonusType}
+													onValueChange={value =>
+														setLocalBonusType(value as any)
+													}
+												>
+													<SelectTrigger>
+														<SelectValue placeholder='Тип бонуса' />
+													</SelectTrigger>
+													<SelectContent>
+														<SelectItem value='all'>Все</SelectItem>
+														<SelectItem value='income'>Доход</SelectItem>
+														<SelectItem value='expense'>Расход</SelectItem>
+													</SelectContent>
+												</Select>
+											</div>
+										</div>
+										<DialogFooter>
+											<Button
+												variant='outline'
+												onClick={() => {
+													setLocalDescription('')
+													setLocalAmount(null)
+													setLocalBonusChange(null)
+													setLocalDate(null)
+													setLocalType('all')
+													setLocalBonusType('all')
+												}}
+											>
+												Сбросить
+											</Button>
+											<DialogClose asChild>
+												<Button
+													onClick={() => {
+														setAdvancedFilters({
+															description: localDescription,
+															amount: localAmount,
+															bonusChange: localBonusChange,
+															date: localDate,
+															type: localType,
+															bonusType: localBonusType,
+														})
+													}}
+												>
+													Применить
+												</Button>
+											</DialogClose>
+										</DialogFooter>
+									</DialogContent>
+								</Dialog>
 							</div>
 						</div>
 
-						<div className='rounded-md border'>
-							<Table>
-								<TableHeader>
-									<TableRow>
-										<TableHead>Date</TableHead>
-										<TableHead>Category</TableHead>
-										<TableHead>Description</TableHead>
-										<TableHead>Bonus</TableHead>
-										<TableHead className='text-right'>Amount</TableHead>
-									</TableRow>
-								</TableHeader>
-								<TableBody>
-									{transactions.map(transaction => {
-										// Находим объект категории по id, хранящемуся в transaction.Category
-										const categoryObj = categories.find(
-											cat => cat.ID === transaction.Category
-										)
-										return (
-											<TableRow
-												key={transaction.ID}
-												onClick={() => handleTransactionClick(transaction)}
-												role='button'
-												tabIndex={0}
-												className='cursor-pointer hover:zinc-800 transition-colors'
-											>
-												<TableCell>
-													{format(new Date(transaction.Date), 'd MMMM yyyy', {
-														locale: ru,
-													})}
-												</TableCell>
-
-												<TableCell>
-													{categoryObj
-														? categoryObj.Name
-														: 'Неизвестная категория'}
-												</TableCell>
-												<TableCell>
-													{' '}
-													{transaction.Description &&
-													transaction.Description.length > 15
-														? transaction.Description.slice(0, 15) + '...'
-														: transaction.Description}
-												</TableCell>
-												<TableCell
-													className={`${
-														transaction.BonusChange === 0
-															? ''
-															: transaction.BonusType === 'expense'
-															? 'text-red-500'
-															: transaction.BonusType === 'income'
-															? 'text-emerald-500'
-															: ''
-													}`}
-												>
-													{transaction.BonusChange === 0
-														? '-'
-														: transaction.BonusChange}
-												</TableCell>
-												<TableCell
-													className={`text-right ${
-														transaction.Type === 'expense'
-															? 'text-red-500'
-															: transaction.Type === 'income'
-															? 'text-emerald-500'
-															: ''
-													}`}
-												>
-													₽{Math.abs(transaction.Amount).toLocaleString()}
-												</TableCell>
+						<div className='rounded-md border space-y-4'>
+							{Object.entries(
+								transactions.reduce((groups, transaction) => {
+									const date = format(
+										new Date(transaction.Date),
+										'd MMMM yyyy',
+										{
+											locale: ru,
+										}
+									)
+									if (!groups[date]) {
+										groups[date] = []
+									}
+									groups[date].push(transaction)
+									return groups
+								}, {})
+							).map(([date, dayTransactions]) => (
+								<div key={date} className='border-b last:border-b-0'>
+									<div className='bg-muted px-4 py-2'>
+										<h3 className='font-medium'>{date}</h3>
+									</div>
+									<Table>
+										<TableHeader>
+											<TableRow>
+												<TableHead>Category</TableHead>
+												<TableHead>Description</TableHead>
+												<TableHead>Bonus</TableHead>
+												<TableHead className='text-right'>Amount</TableHead>
 											</TableRow>
-										)
-									})}
-								</TableBody>
-							</Table>
+										</TableHeader>
+										<TableBody>
+											{dayTransactions.map(transaction => {
+												const categoryObj = categories.find(
+													cat => cat.ID === transaction.Category
+												)
+												return (
+													<TableRow
+														key={transaction.ID}
+														onClick={() => handleTransactionClick(transaction)}
+														role='button'
+														tabIndex={0}
+														className='cursor-pointer hover:zinc-800 transition-colors'
+													>
+														<TableCell>
+															{categoryObj
+																? categoryObj.Name
+																: 'Неизвестная категория'}
+														</TableCell>
+														<TableCell>
+															{transaction.Description &&
+															transaction.Description.length > 15
+																? transaction.Description.slice(0, 15) + '...'
+																: transaction.Description}
+														</TableCell>
+														<TableCell
+															className={`${
+																transaction.BonusChange === 0
+																	? ''
+																	: transaction.BonusType === 'expense'
+																	? 'text-red-500'
+																	: transaction.BonusType === 'income'
+																	? 'text-emerald-500'
+																	: ''
+															}`}
+														>
+															{transaction.BonusChange === 0
+																? '-'
+																: transaction.BonusChange}
+														</TableCell>
+														<TableCell
+															className={`text-right ${
+																transaction.Type === 'expense'
+																	? 'text-red-500'
+																	: transaction.Type === 'income'
+																	? 'text-emerald-500'
+																	: ''
+															}`}
+														>
+															₽{Math.abs(transaction.Amount).toLocaleString()}
+														</TableCell>
+													</TableRow>
+												)
+											})}
+										</TableBody>
+									</Table>
+								</div>
+							))}
 						</div>
 					</CardContent>
 				</Card>
