@@ -3,8 +3,12 @@
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useToast } from '@/hooks/use-toast'
 import Link from 'next/link'
+import axios from 'axios'
+import Cookies from 'js-cookie'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   LineChart,
   Line,
@@ -26,8 +30,8 @@ import {
 	DialogTitle,
 	DialogDescription,
 } from '@/components/ui/dialog'
-import Cookies from 'js-cookie'
 import NotLoginModal from '@/components/ui/NotLoginModal'
+import { GetBalance, GetBonus } from '@/api/GetBalanceAndBonus'
 
 const lineChartData = [
   { name: "Jan", income: 65000, expenses: 45000 },
@@ -61,6 +65,33 @@ const recentTransactions = [
 ];
 
 export default function DashboardPage() {
+	const { toast } = useToast()
+	const [balance, setBalance] = useState(0)
+	const [bonus, setBonus] = useState(0)
+	const [isLoading, setIsLoading] = useState(true)
+
+	useEffect(() => {
+		const fetchData = async () => {
+			try {
+				setIsLoading(true)
+				await Promise.all([
+					GetBalance(setBalance, toast),
+					GetBonus(setBonus, toast),
+				])
+			} catch (error) {
+				toast({
+					title: 'Ошибка загрузки данных',
+					description: 'Попробуйте обновить страницу',
+					variant: 'destructive',
+				})
+			} finally {
+				setIsLoading(false)
+			}
+		}
+
+		fetchData()
+	}, [])
+
   return (
 		<>
 			<NotLoginModal />
@@ -81,23 +112,46 @@ export default function DashboardPage() {
 							<Wallet className='h-4 w-4 text-blue-500' />
 						</CardHeader>
 						<CardContent>
-							<div className='text-2xl font-bold'>₽245,000</div>
-							<p className='text-xs text-muted-foreground mt-1'>
-								+20.1% from last month
-							</p>
+							{isLoading ? (
+								<div className='space-y-2'>
+									<Skeleton className='h-6 w-32' />
+									<Skeleton className='h-4 w-24' />
+								</div>
+							) : (
+								<>
+									<div className='text-2xl font-bold'>
+										₽{(balance || 0).toLocaleString('ru-RU')}
+									</div>
+									<p className='text-xs text-muted-foreground mt-1'>
+										{/* Обновите динамический процент */}
+										+20.1% с прошлого месяца
+									</p>
+								</>
+							)}
 						</CardContent>
 					</Card>
 					<Card className='bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border-none'>
 						<CardHeader>
 							<CardTitle className='flex items-center justify-between'>
-								Total Bonus Points
+								Total Bonus
 							</CardTitle>
 						</CardHeader>
 						<CardContent>
-							<div className='text-2xl font-bold'>₽245,000</div>
-							<p className='text-xs text-muted-foreground mt-1'>
-								+20.1% from last month
-							</p>
+							{isLoading ? (
+								<div className='space-y-2'>
+									<Skeleton className='h-6 w-32' />
+									<Skeleton className='h-4 w-24' />
+								</div>
+							) : (
+								<>
+									<div className='text-2xl font-bold'>
+										{(bonus || 0).toLocaleString('ru-RU')}
+									</div>
+									<p className='text-xs text-muted-foreground mt-1'>
+										+20.1% с прошлого месяца
+									</p>
+								</>
+							)}
 						</CardContent>
 					</Card>
 					<Card className='bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-none'>
