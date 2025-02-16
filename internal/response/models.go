@@ -19,3 +19,11 @@ type TokenResponse struct {
 type MessageResponse struct {
 	Message string `json:"message"`
 }
+
+type BalanceResponse struct {
+	Balance float64 `json:"balance"`
+}
+
+type BonusResponse struct {
+	Balance float64 `json:"balance"`
+}

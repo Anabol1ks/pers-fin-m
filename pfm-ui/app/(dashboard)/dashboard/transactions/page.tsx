@@ -1052,6 +1052,7 @@ export default function TransactionsPage() {
 										<TableHeader>
 											<TableRow>
 												<TableHead>Category</TableHead>
+												<TableHead>Title</TableHead>
 												<TableHead>Description</TableHead>
 												<TableHead>Bonus</TableHead>
 												<TableHead className='text-right'>Amount</TableHead>
@@ -1074,6 +1075,12 @@ export default function TransactionsPage() {
 															{categoryObj
 																? categoryObj.Name
 																: 'Неизвестная категория'}
+														</TableCell>
+														<TableCell>
+															{transaction.Title &&
+															transaction.Title.length > 15
+																? transaction.Title.slice(0, 15) + '...'
+																: transaction.Title}
 														</TableCell>
 														<TableCell>
 															{transaction.Description &&

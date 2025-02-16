@@ -301,38 +301,6 @@
             }
         },
         "/transactions": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Получить все транзакции пользователя",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Transactions"
-                ],
-                "summary": "Получить все транзакции пользователя",
-                "responses": {
-                    "200": {
-                        "description": "Список транзакций",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/transactions.TransactionInput"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Ошибка при получении транзакций",
-                        "schema": {
-                            "$ref": "#/definitions/response.ErrorResponse"
-                        }
-                    }
-                }
-            },
             "post": {
                 "security": [
                     {
@@ -568,6 +536,166 @@
                     }
                 }
             }
+        },
+        "/users/balance": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Получает текущий баланс пользователя",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Получить текущий баланс пользователя",
+                "responses": {
+                    "200": {
+                        "description": "Баланс пользователя",
+                        "schema": {
+                            "$ref": "#/definitions/response.BalanceResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка при получении баланса",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Обновляет баланс пользователя",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Обновить баланс пользователя",
+                "parameters": [
+                    {
+                        "description": "Новый баланс",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/users.UpdateBalanceInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Обновленный баланс",
+                        "schema": {
+                            "$ref": "#/definitions/response.BalanceResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Ошибка валидации",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка при обновлении баланса",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/bonus": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Получает текущий баланс бонусов пользователя",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Получить текущий баланс бонусов пользователя",
+                "responses": {
+                    "200": {
+                        "description": "Бонусы пользователя",
+                        "schema": {
+                            "$ref": "#/definitions/response.BonusResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка при получении бонусов",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Обновляет бонусы пользователя",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Обновить бонусов пользователя",
+                "parameters": [
+                    {
+                        "description": "Новый баланс бонусов",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/users.UpdateBonusInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Обновленный баланс бонусов",
+                        "schema": {
+                            "$ref": "#/definitions/response.BonusResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Ошибка валидации",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка при обновлении баланса бонусов",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -629,6 +757,22 @@
                 "userID": {
                     "description": "nil для дефолтных категорий",
                     "type": "integer"
+                }
+            }
+        },
+        "response.BalanceResponse": {
+            "type": "object",
+            "properties": {
+                "balance": {
+                    "type": "number"
+                }
+            }
+        },
+        "response.BonusResponse": {
+            "type": "object",
+            "properties": {
+                "balance": {
+                    "type": "number"
                 }
             }
         },
@@ -733,6 +877,28 @@
                 },
                 "typeBonus": {
                     "type": "string"
+                }
+            }
+        },
+        "users.UpdateBalanceInput": {
+            "type": "object",
+            "required": [
+                "balance"
+            ],
+            "properties": {
+                "balance": {
+                    "type": "number"
+                }
+            }
+        },
+        "users.UpdateBonusInput": {
+            "type": "object",
+            "required": [
+                "bonus"
+            ],
+            "properties": {
+                "bonus": {
+                    "type": "number"
                 }
             }
         },

@@ -40,6 +40,16 @@ definitions:
         description: nil для дефолтных категорий
         type: integer
     type: object
+  response.BalanceResponse:
+    properties:
+      balance:
+        type: number
+    type: object
+  response.BonusResponse:
+    properties:
+      balance:
+        type: number
+    type: object
   response.ErrorResponse:
     description: Стандартный ответ при ошибке
     properties:
@@ -109,6 +119,20 @@ definitions:
         type: string
       typeBonus:
         type: string
+    type: object
+  users.UpdateBalanceInput:
+    properties:
+      balance:
+        type: number
+    required:
+    - balance
+    type: object
+  users.UpdateBonusInput:
+    properties:
+      bonus:
+        type: number
+    required:
+    - bonus
     type: object
   сategory.CreateCategoryInput:
     properties:
@@ -320,26 +344,6 @@ paths:
       tags:
       - Categories
   /transactions:
-    get:
-      description: Получить все транзакции пользователя
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Список транзакций
-          schema:
-            items:
-              $ref: '#/definitions/transactions.TransactionInput'
-            type: array
-        "500":
-          description: Ошибка при получении транзакций
-          schema:
-            $ref: '#/definitions/response.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Получить все транзакции пользователя
-      tags:
-      - Transactions
     post:
       consumes:
       - application/json
@@ -490,6 +494,106 @@ paths:
       summary: Поиск транзакций
       tags:
       - Transactions
+  /users/balance:
+    get:
+      description: Получает текущий баланс пользователя
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Баланс пользователя
+          schema:
+            $ref: '#/definitions/response.BalanceResponse'
+        "500":
+          description: Ошибка при получении баланса
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Получить текущий баланс пользователя
+      tags:
+      - Users
+    put:
+      consumes:
+      - application/json
+      description: Обновляет баланс пользователя
+      parameters:
+      - description: Новый баланс
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/users.UpdateBalanceInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Обновленный баланс
+          schema:
+            $ref: '#/definitions/response.BalanceResponse'
+        "400":
+          description: Ошибка валидации
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Ошибка при обновлении баланса
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Обновить баланс пользователя
+      tags:
+      - Users
+  /users/bonus:
+    get:
+      description: Получает текущий баланс бонусов пользователя
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Бонусы пользователя
+          schema:
+            $ref: '#/definitions/response.BonusResponse'
+        "500":
+          description: Ошибка при получении бонусов
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Получить текущий баланс бонусов пользователя
+      tags:
+      - Users
+    put:
+      consumes:
+      - application/json
+      description: Обновляет бонусы пользователя
+      parameters:
+      - description: Новый баланс бонусов
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/users.UpdateBonusInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Обновленный баланс бонусов
+          schema:
+            $ref: '#/definitions/response.BonusResponse'
+        "400":
+          description: Ошибка валидации
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Ошибка при обновлении баланса бонусов
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Обновить бонусов пользователя
+      tags:
+      - Users
 securityDefinitions:
   BearerAuth:
     in: header

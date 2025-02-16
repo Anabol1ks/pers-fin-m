@@ -63,7 +63,7 @@ const recentTransactions = [
 export default function DashboardPage() {
   return (
 		<>
-      <NotLoginModal />
+			<NotLoginModal />
 			<div className='space-y-6'>
 				<div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4'>
 					<h1 className='text-3xl font-bold'>Welcome back!</h1>
@@ -79,6 +79,19 @@ export default function DashboardPage() {
 								Total Balance
 							</CardTitle>
 							<Wallet className='h-4 w-4 text-blue-500' />
+						</CardHeader>
+						<CardContent>
+							<div className='text-2xl font-bold'>₽245,000</div>
+							<p className='text-xs text-muted-foreground mt-1'>
+								+20.1% from last month
+							</p>
+						</CardContent>
+					</Card>
+					<Card className='bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border-none'>
+						<CardHeader>
+							<CardTitle className='flex items-center justify-between'>
+								Total Bonus Points
+							</CardTitle>
 						</CardHeader>
 						<CardContent>
 							<div className='text-2xl font-bold'>₽245,000</div>

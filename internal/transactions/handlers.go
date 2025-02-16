@@ -7,6 +7,7 @@ import (
 
 	"github.com/Anabol1ks/pers-fin-m/internal/models"
 	"github.com/Anabol1ks/pers-fin-m/internal/storage"
+	"github.com/Anabol1ks/pers-fin-m/internal/users"
 	"github.com/gin-gonic/gin"
 )
 
@@ -93,11 +94,35 @@ func CreateTransaction(c *gin.Context) {
 		Type:        models.TransactionType(input.Type),
 	}
 
-	if err := storage.DB.Create(&transaction).Error; err != nil {
+	tx := storage.DB.Begin()
+	if err := tx.Create(&transaction).Error; err != nil {
+		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка создания транзакции"})
 		return
 	}
 
+	// Получаем пользователя
+	var user users.User
+	if err := tx.First(&user, userID).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Пользователь не найден"})
+		return
+	}
+
+	// Обновляем баланс
+	if transaction.Type == models.Income {
+		user.Balance += float64(transaction.Amount)
+	} else if transaction.Type == models.Expense {
+		user.Balance -= float64(transaction.Amount)
+	}
+
+	if err := tx.Save(&user).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось обновить баланс"})
+		return
+	}
+
+	tx.Commit()
 	c.JSON(http.StatusCreated, transaction)
 }
 
@@ -166,6 +191,9 @@ func UpdateTransaction(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Транзакция не найдена"})
 		return
 	}
+
+	oldAmount := transaction.Amount
+	oldType := transaction.Type
 
 	// Обновление суммы
 	if input.Amount != nil {
@@ -243,13 +271,41 @@ func UpdateTransaction(c *gin.Context) {
 		transaction.Type = models.TransactionType(*input.Type)
 	}
 
-	// Сохранение изменений
-	if err := storage.DB.Save(&transaction).Error; err != nil {
-		log.Println("Ошибка обновления транзакции:", err)
+	tx := storage.DB.Begin()
+
+	if err := tx.Save(&transaction).Error; err != nil {
+		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка обновления транзакции"})
 		return
 	}
 
+	// Получаем пользователя
+	var user users.User
+	if err := tx.First(&user, userID).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Пользователь не найден"})
+		return
+	}
+
+	// Рассчитываем разницу
+	// Предположим, что обновление типа транзакции не меняется, или если меняется – надо логически обработать
+	var delta float64
+	if oldType == models.Income {
+		delta = float64(transaction.Amount) - float64(oldAmount)
+	} else if oldType == models.Expense {
+		// Для расхода: если новая сумма больше, то баланс должен уменьшиться еще больше
+		delta = float64(oldAmount) - float64(transaction.Amount)
+	}
+
+	// Обновляем баланс
+	user.Balance += delta
+	if err := tx.Save(&user).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось обновить баланс"})
+		return
+	}
+
+	tx.Commit()
 	c.JSON(http.StatusOK, transaction)
 }
 
@@ -274,11 +330,38 @@ func DelTransactions(c *gin.Context) {
 		return
 	}
 
-	if err := storage.DB.Delete(&transaction).Error; err != nil {
+	tx := storage.DB.Begin()
+
+	// Получаем пользователя
+	var user users.User
+	if err := tx.First(&user, userID).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Пользователь не найден"})
+		return
+	}
+
+	// Обновляем баланс — отменяем влияние транзакции
+	if transaction.Type == models.Income {
+		// Если доход, то удаление означает уменьшение баланса
+		user.Balance -= float64(transaction.Amount)
+	} else if transaction.Type == models.Expense {
+		// Если расход, то удаление означает увеличение баланса
+		user.Balance += float64(transaction.Amount)
+	}
+
+	if err := tx.Save(&user).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось обновить баланс"})
+		return
+	}
+
+	if err := tx.Delete(&transaction).Error; err != nil {
+		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при удалении транзакции"})
 		return
 	}
 
+	tx.Commit()
 	c.JSON(http.StatusOK, gin.H{"message": "Транзакция удалена"})
 }
 

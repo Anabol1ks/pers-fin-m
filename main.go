@@ -65,6 +65,11 @@ func main() {
 		authorized.POST("/categories", сategory.CreateCategory)
 		authorized.DELETE("/categories/:id", сategory.DelCategory)
 		authorized.PUT("/categories/:id", сategory.UpdateCategory)
+
+		authorized.GET("/users/balance", users.GetBalanceHandler)
+		authorized.PUT("/users/balance", users.UpdateBalanceHandler)
+		authorized.GET("/users/bonus", users.GetBonusHandler)
+		authorized.PUT("/users/bonus", users.UpdateBonusHandler)
 	}
 
 	if err := r.Run(":8080"); err != nil {
