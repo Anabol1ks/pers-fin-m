@@ -248,7 +248,17 @@ export default function TransactionsPage() {
 		try {
 			const response = await axios.post(
 				`${process.env.NEXT_PUBLIC_API_URL}/transactions`,
-				newTransaction,
+				{
+					amount: newTransaction.Amount,
+					title: newTransaction.Title,
+					description: newTransaction.Description,
+					category: newTransaction.Category,
+					type: newTransaction.Type,
+					date: newTransaction.Date,
+					currency: newTransaction.Currency,
+					bonusChange: newTransaction.BonusChange,
+					typeBonus: newTransaction.BonusType, // Make sure this field name matches exactly
+				},
 				{
 					headers: {
 						Authorization: `Bearer ${Cookies.get('token')}`,
@@ -819,11 +829,11 @@ export default function TransactionsPage() {
 															valueStr === '' ? null : parseFloat(valueStr)
 														setTransactionToUpdate({
 															...transactionToUpdate,
-															BonusChange: value === 0 ? null : value,
+															BonusChange: value,
 															BonusType:
-																value !== null
-																	? transactionToUpdate.BonusType
-																	: null,
+																value === 0
+																	? null
+																	: transactionToUpdate.BonusType,
 														})
 													}}
 													placeholder='0'

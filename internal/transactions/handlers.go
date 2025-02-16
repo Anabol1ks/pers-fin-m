@@ -224,6 +224,15 @@ func UpdateTransaction(c *gin.Context) {
 			transaction.BonusType = models.TransactionType(*input.BonusType)
 		}
 
+		if *input.BonusChange == 0 {
+			transaction.BonusType = ""
+		}
+
+		if transaction.BonusChange != 0 && transaction.BonusType == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "При ненулевом бонусе тип бонуса должен быть указан"})
+			return
+		}
+
 		// Validate after setting both values
 		if transaction.BonusChange == 0 && transaction.BonusType != "" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "При нулевом бонусе тип бонуса должен быть пустым"})
