@@ -116,6 +116,14 @@ func CreateTransaction(c *gin.Context) {
 		user.Balance -= float64(transaction.Amount)
 	}
 
+	if transaction.BonusChange != 0 {
+		if transaction.Type == models.Income {
+			user.Bonus += transaction.BonusChange
+		} else if transaction.Type == models.Expense {
+			user.Bonus -= transaction.BonusChange
+		}
+	}
+
 	if err := tx.Save(&user).Error; err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось обновить баланс"})
@@ -195,6 +203,9 @@ func UpdateTransaction(c *gin.Context) {
 	oldAmount := transaction.Amount
 	oldType := transaction.Type
 
+	oldBonusChange := transaction.BonusChange
+	oldBonusType := transaction.BonusType
+
 	// Обновление суммы
 	if input.Amount != nil {
 		if *input.Amount <= 0 {
@@ -206,31 +217,22 @@ func UpdateTransaction(c *gin.Context) {
 
 	// Обновление бонусов
 	if input.BonusChange != nil || input.BonusType != nil {
-		newBonusChange := transaction.BonusChange
 		if input.BonusChange != nil {
-			newBonusChange = *input.BonusChange
+			transaction.BonusChange = *input.BonusChange
 		}
-
-		newBonusType := transaction.BonusType
 		if input.BonusType != nil {
-			newBonusType = models.TransactionType(*input.BonusType)
+			transaction.BonusType = models.TransactionType(*input.BonusType)
 		}
 
-		if newBonusChange == 0 && newBonusType != "" {
+		// Validate after setting both values
+		if transaction.BonusChange == 0 && transaction.BonusType != "" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "При нулевом бонусе тип бонуса должен быть пустым"})
 			return
 		}
 
-		if newBonusChange != 0 && newBonusType == "" {
+		if transaction.BonusChange != 0 && transaction.BonusType == "" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "При ненулевом бонусе тип бонуса должен быть указан"})
 			return
-		}
-
-		if input.BonusChange != nil {
-			transaction.BonusChange = newBonusChange
-		}
-		if input.BonusType != nil {
-			transaction.BonusType = newBonusType
 		}
 	}
 
@@ -299,6 +301,15 @@ func UpdateTransaction(c *gin.Context) {
 
 	// Обновляем баланс
 	user.Balance += delta
+
+	var bonusDelta float64
+	if oldBonusType == models.Income {
+		bonusDelta = float64(transaction.BonusChange) - float64(oldBonusChange)
+	} else if oldBonusType == models.Expense {
+		bonusDelta = float64(oldBonusChange) - float64(transaction.BonusChange)
+	}
+	user.Bonus += bonusDelta
+
 	if err := tx.Save(&user).Error; err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось обновить баланс"})
@@ -347,6 +358,14 @@ func DelTransactions(c *gin.Context) {
 	} else if transaction.Type == models.Expense {
 		// Если расход, то удаление означает увеличение баланса
 		user.Balance += float64(transaction.Amount)
+	}
+
+	if transaction.BonusChange != 0 {
+		if transaction.Type == models.Income {
+			user.Bonus -= transaction.BonusChange
+		} else if transaction.Type == models.Expense {
+			user.Bonus += transaction.BonusChange
+		}
 	}
 
 	if err := tx.Save(&user).Error; err != nil {
