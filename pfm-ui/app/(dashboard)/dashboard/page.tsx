@@ -9,6 +9,7 @@ import axios from 'axios'
 import Cookies from 'js-cookie'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from '@/components/ui/skeleton'
+import BonusIcon from '@/components/icon/yandexBonus.svg'
 import {
   LineChart,
   Line,
@@ -134,6 +135,58 @@ export default function DashboardPage() {
 						<CardHeader>
 							<CardTitle className='flex items-center justify-between'>
 								Total Bonus
+								<svg
+									className='h-5 w-5 ml-3'
+									xmlns='http://www.w3.org/2000/svg'
+									viewBox='0 0 48 48'
+								>
+									<defs>
+										<linearGradient
+											id='SVGID_1_'
+											gradientUnits='userSpaceOnUse'
+											x1='1.6566'
+											y1='23.9284'
+											x2='46.2069'
+											y2='23.9284'
+										>
+											<stop offset='0' stopColor='#EA5961' />
+											<stop offset='0.2916' stopColor='#BA5475' />
+											<stop offset='0.6114' stopColor='#8C5088' />
+											<stop offset='0.8582' stopColor='#704D95' />
+											<stop offset='1' stopColor='#654C99' />
+										</linearGradient>
+									</defs>
+									<path
+										fill='none'
+										stroke='url(#SVGID_1_)'
+										strokeWidth='1.3358'
+										strokeMiterlimit='10'
+										d='M29.42,24.33l-3.89,12.26h-5.94l4.13-12.26H9.78l1.32-5.38h14.44l5.23-15.52c-2.15-0.72-4.45-1.1-6.83-1.1C12,2.32,2.32,12,2.32,23.93c0,11.93,9.67,21.6,21.6,21.6c11.8,0,21.38-9.46,21.6-21.2H29.42z'
+									/>
+									<defs>
+										<linearGradient
+											id='SVGID_00000013879612060185511730000011175489787274580666_'
+											gradientUnits='userSpaceOnUse'
+											x1='30.2185'
+											y1='12.0982'
+											x2='45.7982'
+											y2='12.0982'
+										>
+											<stop offset='0' stopColor='#EA5961' />
+											<stop offset='0.2916' stopColor='#BA5475' />
+											<stop offset='0.6114' stopColor='#8C5088' />
+											<stop offset='0.8582' stopColor='#704D95' />
+											<stop offset='1' stopColor='#654C99' />
+										</linearGradient>
+									</defs>
+									<path
+										fill='none'
+										stroke='url(#SVGID_00000013879612060185511730000011175489787274580666_)'
+										strokeWidth='1.3358'
+										strokeMiterlimit='10'
+										d='M31.13,18.95h13.82c-1.32-5.61-4.84-10.38-9.59-13.35L31.13,18.95z'
+									/>
+								</svg>
 							</CardTitle>
 						</CardHeader>
 						<CardContent>
