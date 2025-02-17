@@ -1128,7 +1128,7 @@ export default function TransactionsPage() {
 																	: transaction.BonusType === 'expense'
 																	? 'text-red-500'
 																	: transaction.BonusType === 'income'
-																	? 'text-emerald-500'
+																	? 'text-pink-600'
 																	: ''
 															}`}
 														>

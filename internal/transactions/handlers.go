@@ -117,9 +117,9 @@ func CreateTransaction(c *gin.Context) {
 	}
 
 	if transaction.BonusChange != 0 {
-		if transaction.Type == models.Income {
+		if transaction.BonusType == models.Income {
 			user.Bonus += transaction.BonusChange
-		} else if transaction.Type == models.Expense {
+		} else if transaction.BonusType == models.Expense {
 			user.Bonus -= transaction.BonusChange
 		}
 	}
@@ -370,9 +370,9 @@ func DelTransactions(c *gin.Context) {
 	}
 
 	if transaction.BonusChange != 0 {
-		if transaction.Type == models.Income {
+		if transaction.BonusType == models.Income {
 			user.Bonus -= transaction.BonusChange
-		} else if transaction.Type == models.Expense {
+		} else if transaction.BonusType == models.Expense {
 			user.Bonus += transaction.BonusChange
 		}
 	}
