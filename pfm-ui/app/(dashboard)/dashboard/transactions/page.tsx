@@ -185,6 +185,7 @@ export default function TransactionsPage() {
 				variant: 'destructive',
 			})
 		}
+		setIsLoading(true)
 		setIsDialogOpen(false)
 		setTransactionToUpdate({
 			Amount: null,
@@ -202,6 +203,8 @@ export default function TransactionsPage() {
 
 	// Состояние для DatePicker
 	const [date, setDate] = useState<Date>(new Date())
+
+	const [amountTouched, setAmountTouched] = useState(false)
 
 	const handleAddTransactions = async () => {
 		// Простая валидация
@@ -495,24 +498,39 @@ export default function TransactionsPage() {
 									<div className='flex items-center gap-2'>
 										<Input
 											id='amount'
-											type='text'
+											type='number'
 											value={
 												newTransaction.Amount === null
 													? ''
 													: newTransaction.Amount
 											}
+											placeholder='1000'
 											onChange={e => {
 												const valueStr = e.target.value.trim()
-												if (!/^-?\d*?\d*$/.test(valueStr)) return
+
+												// Не допускаем, чтобы первым символом была точка
+												if (valueStr.startsWith('.')) return
+
+												// Проверка по регулярному выражению:
+												// - только цифры, опционально точка и максимум две цифры после неё
+												// - отрицательные числа (с "-") тут не пройдут
+												if (!/^\d*\.?\d{0,2}$/.test(valueStr)) return
+
+												// Преобразуем строку в число (если поле пустое – null)
 												const value =
 													valueStr === '' ? null : parseFloat(valueStr)
+
+												// Если значение равно 0, тоже считаем его как отсутствие значения (null)
 												setNewTransaction({
 													...newTransaction,
 													Amount: value === 0 ? null : value,
 												})
 											}}
-											placeholder='1000'
-											className='flex-1'
+											onKeyDown={e => {
+												if (e.key === '-' || e.key === 'e') {
+													e.preventDefault()
+												}
+											}}
 										/>
 										<Select
 											onValueChange={value =>
@@ -704,7 +722,7 @@ export default function TransactionsPage() {
 									<div className='flex items-center gap-2'>
 										<Input
 											id='amount'
-											type='text'
+											type='number'
 											value={
 												transactionToUpdate.Amount === null
 													? ''
@@ -712,13 +730,25 @@ export default function TransactionsPage() {
 											}
 											onChange={e => {
 												const valueStr = e.target.value.trim()
-												if (!/^-?\d*\.?\d*$/.test(valueStr)) return
+												if (valueStr.startsWith('.')) return
+
+												// Проверка по регулярному выражению:
+												// - только цифры, опционально точка и максимум две цифры после неё
+												// - отрицательные числа (с "-") тут не пройдут
+												if (!/^\d*\.?\d{0,2}$/.test(valueStr)) return
+
+												// Преобразуем строку в число (если поле пустое – null)
 												const value =
 													valueStr === '' ? null : parseFloat(valueStr)
 												setTransactionToUpdate({
 													...transactionToUpdate,
 													Amount: value === 0 ? null : value,
 												})
+											}}
+											onKeyDown={e => {
+												if (e.key === '-' || e.key === 'e') {
+													e.preventDefault()
+												}
 											}}
 											placeholder='1000'
 											className='flex-1'
@@ -1063,7 +1093,6 @@ export default function TransactionsPage() {
 											<TableRow>
 												<TableHead>Category</TableHead>
 												<TableHead>Title</TableHead>
-												<TableHead>Description</TableHead>
 												<TableHead>Bonus</TableHead>
 												<TableHead className='text-right'>Amount</TableHead>
 											</TableRow>
@@ -1091,12 +1120,6 @@ export default function TransactionsPage() {
 															transaction.Title.length > 15
 																? transaction.Title.slice(0, 15) + '...'
 																: transaction.Title}
-														</TableCell>
-														<TableCell>
-															{transaction.Description &&
-															transaction.Description.length > 15
-																? transaction.Description.slice(0, 15) + '...'
-																: transaction.Description}
 														</TableCell>
 														<TableCell
 															className={`${

@@ -12,7 +12,7 @@ import (
 )
 
 type TransactionInput struct {
-	Amount      int       `json:"amount" binding:"required"`
+	Amount      float64   `json:"amount" binding:"required"`
 	BonusChange float64   `json:"bonusChange"`
 	Currency    string    `json:"currency"`
 	Date        time.Time `json:"date"`
@@ -158,7 +158,7 @@ func CreateTransaction(c *gin.Context) {
 // ВОЗМОЖНО ЭТО НЕ НУЖНО
 
 type TransactionUpdate struct {
-	Amount      *int       `json:"amount"`
+	Amount      *float64   `json:"amount"`
 	BonusChange *float64   `json:"bonusChange"`
 	Currency    *string    `json:"currency"`
 	Date        *time.Time `json:"date"`
@@ -398,7 +398,7 @@ func DelTransactions(c *gin.Context) {
 type TransactionSearchInput struct {
 	Title       *string    `form:"title"`
 	Description *string    `form:"description"`
-	Amount      *int       `form:"amount"`
+	Amount      *float64   `form:"amount"`
 	BonusChange *float64   `form:"bonusChange"`
 	Date        *time.Time `form:"date"`
 	Category    *uint      `form:"category"`
@@ -448,7 +448,7 @@ func SearchTransactions(c *gin.Context) {
 
 	// Фильтрация по сумме с допуском ±10%
 	if input.Amount != nil {
-		tol := int(float64(*input.Amount) * 0.1)
+		tol := (float64(*input.Amount) * 0.1)
 		if tol < 1 {
 			tol = 1
 		}

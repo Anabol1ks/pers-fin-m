@@ -16,7 +16,7 @@ const (
 type Transaction struct {
 	gorm.Model
 	UserID      uint            `gorm:"not null"`
-	Amount      int             `gorm:"not null"`
+	Amount      float64         `gorm:"not null"`
 	BonusChange float64         `gorm:"default:0"`
 	BonusType   TransactionType `gorm:"type:varchar(10)"`
 	Currency    string          `gorm:"type:varchar(10);default:'RUB'"`
