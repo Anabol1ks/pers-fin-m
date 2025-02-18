@@ -1,7 +1,10 @@
 package auth
 
 import (
+	"crypto/rand"
 	"errors"
+	"fmt"
+	"math/big"
 	"net/http"
 	"os"
 	"regexp"
@@ -59,10 +62,17 @@ func RegisterHandler(c *gin.Context) {
 		return
 	}
 
+	verifCode, err := generateVerificationCode()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка генерации кода подтверждения"})
+		return
+	}
+
 	user := users.User{
-		Username: input.Username,
-		Email:    input.Email,
-		Password: string(hashedPassword),
+		Username:         input.Username,
+		Email:            input.Email,
+		Password:         string(hashedPassword),
+		VerificationCode: verifCode,
 	}
 
 	if err := storage.DB.Create(&user).Error; err != nil {
@@ -145,4 +155,66 @@ func GenerateJWT(userID uint) string {
 	})
 	tokenString, _ := token.SignedString(jwtSecret)
 	return tokenString
+}
+
+func generateVerificationCode() (string, error) {
+	max := big.NewInt(1000000) // Диапазон [0, 1000000)
+	n, err := rand.Int(rand.Reader, max)
+	if err != nil {
+		return "", err
+	}
+	code := fmt.Sprintf("%06d", n.Int64())
+	return code, nil
+}
+
+type VerificationCodeInput struct {
+	Code string `json:"code" binding:"required,len=6"`
+}
+
+// @Security BearerAuth
+// VerifyEmailHandler godoc
+// @Summary Подтверждение аккаунта
+// @Description Подтверждение аккаунта пользователя с указанием почты и кода подтверждения
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param input body VerificationCodeInput true "Данные пользователя"
+// @Success 200 {object} response.SuccessResponse "Аккаунт успешно подтверждён"
+// @Failure 400 {object} response.ErrorResponse "Неверный код подтверждения"
+// @Failure 404 {object} response.ErrorResponse "Пользователь не существует"
+// @Failure 409 {object} response.ErrorResponse "Аккаунт уже подтверждён"
+// @Router /auth/verify [post]
+func VerifyEmailHandler(c *gin.Context) {
+	userID := c.GetUint("userID")
+
+	var input VerificationCodeInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var user users.User
+	if err := storage.DB.First(&user, userID).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Пользователь не найден"})
+		return
+	}
+
+	if user.Verified {
+		c.JSON(http.StatusConflict, gin.H{"error": "Аккаунт уже подтверждён"})
+		return
+	}
+
+	if user.VerificationCode != input.Code {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Неверный код подтверждения"})
+		return
+	}
+
+	user.Verified = true
+	user.VerificationCode = ""
+	if err := storage.DB.Save(&user).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось обновить пользователя"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Аккаунт успешно подтверждён"})
 }

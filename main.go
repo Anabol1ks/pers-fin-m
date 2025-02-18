@@ -70,6 +70,8 @@ func main() {
 		authorized.PUT("/users/balance", users.UpdateBalanceHandler)
 		authorized.GET("/users/bonus", users.GetBonusHandler)
 		authorized.PUT("/users/bonus", users.UpdateBonusHandler)
+
+		authorized.POST("/auth/verify", auth.VerifyEmailHandler)
 	}
 
 	if err := r.Run(":8080"); err != nil {

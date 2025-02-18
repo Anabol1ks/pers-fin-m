@@ -22,6 +22,13 @@ definitions:
     - password
     - username
     type: object
+  auth.VerificationCodeInput:
+    properties:
+      code:
+        type: string
+    required:
+    - code
+    type: object
   models.Category:
     properties:
       color:
@@ -71,7 +78,7 @@ definitions:
   transactions.TransactionInput:
     properties:
       amount:
-        type: integer
+        type: number
       bonusChange:
         type: number
       category:
@@ -99,7 +106,7 @@ definitions:
   transactions.TransactionUpdate:
     properties:
       amount:
-        type: integer
+        type: number
       bonusChange:
         type: number
       category:
@@ -220,6 +227,42 @@ paths:
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       summary: Регистрация пользователя
+      tags:
+      - auth
+  /auth/verify:
+    post:
+      consumes:
+      - application/json
+      description: Подтверждение аккаунта пользователя с указанием почты и кода подтверждения
+      parameters:
+      - description: Данные пользователя
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/auth.VerificationCodeInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Аккаунт успешно подтверждён
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Неверный код подтверждения
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Пользователь не существует
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "409":
+          description: Аккаунт уже подтверждён
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Подтверждение аккаунта
       tags:
       - auth
   /categories:

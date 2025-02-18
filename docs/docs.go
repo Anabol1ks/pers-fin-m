@@ -119,6 +119,63 @@ const docTemplate = `{
                 }
             }
         },
+        "/auth/verify": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Подтверждение аккаунта пользователя с указанием почты и кода подтверждения",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Подтверждение аккаунта",
+                "parameters": [
+                    {
+                        "description": "Данные пользователя",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auth.VerificationCodeInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Аккаунт успешно подтверждён",
+                        "schema": {
+                            "$ref": "#/definitions/response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный код подтверждения",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Пользователь не существует",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Аккаунт уже подтверждён",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/categories": {
             "get": {
                 "security": [
@@ -743,6 +800,17 @@ const docTemplate = `{
                 }
             }
         },
+        "auth.VerificationCodeInput": {
+            "type": "object",
+            "required": [
+                "code"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string"
+                }
+            }
+        },
         "models.Category": {
             "type": "object",
             "properties": {
@@ -822,7 +890,7 @@ const docTemplate = `{
             ],
             "properties": {
                 "amount": {
-                    "type": "integer"
+                    "type": "number"
                 },
                 "bonusChange": {
                     "type": "number"
@@ -858,7 +926,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "amount": {
-                    "type": "integer"
+                    "type": "number"
                 },
                 "bonusChange": {
                     "type": "number"
