@@ -67,6 +67,52 @@ const docTemplate = `{
                 }
             }
         },
+        "/auth/newVerify": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Подтверждение аккаунта пользователя с указанием почты и кода подтверждения",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Подтверждение аккаунта",
+                "responses": {
+                    "200": {
+                        "description": "Письмо отправлено",
+                        "schema": {
+                            "$ref": "#/definitions/response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный код подтверждения",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Аккаунт уже подтверждён",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Пользователь не существует",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/register": {
             "post": {
                 "description": "Регистрация пользователя с указанием никнейма, почты, пароля",
@@ -763,6 +809,39 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/users/info": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Получить информацию о себе",
+                "responses": {
+                    "200": {
+                        "description": "Пользователь",
+                        "schema": {
+                            "$ref": "#/definitions/users.UserInfo"
+                        }
+                    },
+                    "500": {
+                        "description": "Пользователь не найден",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -977,6 +1056,26 @@ const docTemplate = `{
             "properties": {
                 "bonus": {
                     "type": "number"
+                }
+            }
+        },
+        "users.UserInfo": {
+            "type": "object",
+            "properties": {
+                "balance": {
+                    "type": "number"
+                },
+                "bonus": {
+                    "type": "number"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                },
+                "verify": {
+                    "type": "boolean"
                 }
             }
         },

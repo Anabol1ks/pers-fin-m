@@ -5,8 +5,14 @@ import (
 	"fmt"
 	"html/template"
 	"log"
+	"net/http"
 	"net/smtp"
 	"os"
+
+	"github.com/Anabol1ks/pers-fin-m/internal/auth"
+	"github.com/Anabol1ks/pers-fin-m/internal/storage"
+	"github.com/Anabol1ks/pers-fin-m/internal/users"
+	"github.com/gin-gonic/gin"
 )
 
 func SendEmail(to, subject, body string) error {
@@ -192,7 +198,7 @@ var emailTemplate = `<!DOCTYPE html>
 
       <div class="code">{{.Code}}</div>
 
-      <p>Если вы не запрашивали регистрацию, проигнорируйте это письмо.</p>
+      <p>Если вы не запрашивали подтверждение, проигнорируйте это письмо.</p>
     </div>
 
     <div class="footer">
@@ -234,4 +240,49 @@ func SendVerifyCode(username, email, code string) error {
 
 	log.Println("Письмо отправлено")
 	return nil
+}
+
+// @Security BearerAuth
+// SendNewVerify godoc
+// @Summary Запрос на новое письмо с кодом
+// @Description Запрос пользователя на новое письмо с кодом подтверждения
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Success 200 {object} response.SuccessResponse "Письмо отправлено"
+// @Failure 400 {object} response.ErrorResponse "Неверный код подтверждения"
+// @Failure 500 {object} response.ErrorResponse "Пользователь не существует"
+// @Failure 409 {object} response.ErrorResponse "Аккаунт уже подтверждён"
+// @Router /auth/newVerify [post]
+func SendNewVerify(c *gin.Context) {
+	userID := c.GetUint("userID")
+
+	var user users.User
+	if err := storage.DB.First(&user, userID).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Пользователь не найден"})
+	}
+
+	if user.Verified {
+		c.JSON(http.StatusConflict, gin.H{"error": "Аккаунт уже подтверждён"})
+		return
+	}
+
+	verifCode, err := auth.GenerateVerificationCode()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка генерации кода подтверждения"})
+		return
+	}
+
+	user.VerificationCode = verifCode
+
+	if err := storage.DB.Save(&user).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось обносить код подтверждения"})
+		return
+	}
+
+	if err := SendVerifyCode(user.Username, user.Email, verifCode); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка отправки письма"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Письмо отправлено"})
 }

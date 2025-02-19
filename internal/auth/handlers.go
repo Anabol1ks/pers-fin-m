@@ -62,7 +62,7 @@ func RegisterHandler(c *gin.Context) {
 		return
 	}
 
-	verifCode, err := generateVerificationCode()
+	verifCode, err := GenerateVerificationCode()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка генерации кода подтверждения"})
 		return
@@ -157,7 +157,7 @@ func GenerateJWT(userID uint) string {
 	return tokenString
 }
 
-func generateVerificationCode() (string, error) {
+func GenerateVerificationCode() (string, error) {
 	max := big.NewInt(1000000) // Диапазон [0, 1000000)
 	n, err := rand.Int(rand.Reader, max)
 	if err != nil {

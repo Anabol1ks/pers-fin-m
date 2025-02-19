@@ -140,3 +140,41 @@ func UpdateBonusHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"balance": user.Bonus})
 }
+
+type UserInfo struct {
+	Username string  `json:"username"`
+	Email    string  `json:"email"`
+	Balance  float64 `json:"balance"`
+	Bonus    float64 `json:"bonus"`
+	Verified bool    `json:"verify"`
+}
+
+// @Security BearerAuth
+// UserInfoHandler godoc
+// @Summary Получить информацию о себе
+// @Descriotion Получение пользователя с помощью токена
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Success 200 {object} UserInfo "Пользователь"
+// @Failure 500 {object} response.ErrorResponse "Пользователь не найден"
+// @Router /users/info [get]
+func UserInfoHandler(c *gin.Context) {
+	userID := c.GetUint("userID")
+
+	var user User
+	if err := storage.DB.First(&user, userID).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Пользователь не найден"})
+		return
+	}
+
+	resUser := UserInfo{
+		Username: user.Username,
+		Email:    user.Email,
+		Balance:  user.Balance,
+		Bonus:    user.Bonus,
+		Verified: user.Verified,
+	}
+
+	c.JSON(http.StatusOK, resUser)
+}

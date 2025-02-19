@@ -8,6 +8,7 @@ import (
 	_ "github.com/Anabol1ks/pers-fin-m/docs"
 	"github.com/Anabol1ks/pers-fin-m/internal/auth"
 	сategory "github.com/Anabol1ks/pers-fin-m/internal/category"
+	email "github.com/Anabol1ks/pers-fin-m/internal/emails"
 	"github.com/Anabol1ks/pers-fin-m/internal/models"
 	"github.com/Anabol1ks/pers-fin-m/internal/storage"
 	"github.com/Anabol1ks/pers-fin-m/internal/transactions"
@@ -70,8 +71,10 @@ func main() {
 		authorized.PUT("/users/balance", users.UpdateBalanceHandler)
 		authorized.GET("/users/bonus", users.GetBonusHandler)
 		authorized.PUT("/users/bonus", users.UpdateBonusHandler)
+		authorized.GET("/users/info", users.UserInfoHandler)
 
 		authorized.POST("/auth/verify", auth.VerifyEmailHandler)
+		authorized.POST("/auth/newVerify", email.SendNewVerify)
 	}
 
 	if err := r.Run(":8080"); err != nil {
