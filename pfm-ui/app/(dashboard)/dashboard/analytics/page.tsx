@@ -154,45 +154,6 @@ export default function AnalyticsPage() {
 			</div>
 
 			<div className='grid gap-6'>
-				<Card>
-					<CardHeader>
-						<CardTitle>Balance & Bonus History</CardTitle>
-						<CardDescription>
-							Historical trend of your balance and bonus points
-						</CardDescription>
-					</CardHeader>
-					<CardContent className='h-[400px]'>
-						<ResponsiveContainer width='100%' height='100%'>
-							<AreaChart data={balanceHistory}>
-								<CartesianGrid strokeDasharray='3 3' />
-								<XAxis dataKey='date' />
-								<YAxis yAxisId='left' />
-								<YAxis yAxisId='right' orientation='right' />
-								<Tooltip />
-								<Legend />
-								<Area
-									yAxisId='left'
-									type='monotone'
-									dataKey='balance'
-									stroke='hsl(var(--chart-1))'
-									fill='hsl(var(--chart-1))'
-									fillOpacity={0.2}
-									name='Balance'
-								/>
-								<Area
-									yAxisId='right'
-									type='monotone'
-									dataKey='bonus'
-									stroke='hsl(var(--chart-2))'
-									fill='hsl(var(--chart-2))'
-									fillOpacity={0.2}
-									name='Bonus Points'
-								/>
-							</AreaChart>
-						</ResponsiveContainer>
-					</CardContent>
-				</Card>
-
 				<div className='grid gap-6 md:grid-cols-2'>
 					<Card>
 						<CardHeader>

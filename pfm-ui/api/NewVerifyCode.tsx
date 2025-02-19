@@ -1,11 +1,8 @@
-'use client'
+// api/NewVerifyCode.ts
 import axios from 'axios'
 import Cookies from 'js-cookie'
-import { useRouter } from 'next/navigation'
 
 export async function NewVerifyCode(toast: any) {
-	const router = useRouter()
-
 	const token = Cookies.get('token')
 	try {
 		const response = await axios.post(
@@ -18,25 +15,26 @@ export async function NewVerifyCode(toast: any) {
 			}
 		)
 		if (response.data) {
-			router.push('/verify')
 			toast({
 				title: 'Успешно',
 				description: 'Новый код подтверждения отправлен',
 			})
+			return true // Возвращаем успешный результат
 		} else {
-			console.log('Ошибка загрузки информации профиля')
 			toast({
 				title: 'Ошибка',
-				description: 'Не удалось отправить код подтверждени',
+				description: 'Не удалось отправить код подтверждения',
 				variant: 'destructive',
 			})
+			return false
 		}
 	} catch (error) {
-		console.error('Не удалось отправить код подтверждени:', error)
+		console.error('Не удалось отправить код подтверждения:', error)
 		toast({
 			title: 'Ошибка',
-			description: 'Не удалось отправить код подтверждени',
+			description: 'Не удалось отправить код подтверждения',
 			variant: 'destructive',
 		})
+		return false
 	}
 }

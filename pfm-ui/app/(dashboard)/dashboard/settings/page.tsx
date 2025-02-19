@@ -23,7 +23,9 @@ import { useTheme } from "next-themes";
 import NotLoginModal from '@/components/ui/NotLoginModal'
 import { UserInfo } from '@/api/UserInfo'
 import { useToast } from '@/hooks/use-toast'
+import { verifySuccessAtom } from '@/lib/atoms'
 import NotVerify from '@/components/ui/NotVerify'
+import { useAtom } from 'jotai'
 
 
 export default function SettingsPage() {
@@ -38,9 +40,10 @@ export default function SettingsPage() {
   const [user, setUser] = useState('');
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
+	const [verifySuccess] = useAtom(verifySuccessAtom)
 
-  useEffect(()=>{
-    const fetchData = async () => {
+  useEffect(() => {
+		const fetchData = async () => {
 			try {
 				setIsLoading(true)
 				await Promise.all([UserInfo(setUser, toast)])
@@ -56,7 +59,7 @@ export default function SettingsPage() {
 		}
 
 		fetchData()
-  },[])
+	}, [])
 
 
   return (
@@ -66,6 +69,7 @@ export default function SettingsPage() {
 				<h1 className='text-3xl font-bold'>Settings</h1>
 
 				{!user.verify && <NotVerify />}
+				{verifySuccess && <p>Код подтверждения успешно отправлен!</p>}
 				<div className='grid gap-6'>
 					<Card>
 						<CardHeader>
